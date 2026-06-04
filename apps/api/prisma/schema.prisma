@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model cases {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title            String
+  access_code      String    @unique
+  description      String?
+  status           String    @default("ACTIVE")
+  created_at       DateTime  @default(now()) @db.Timestamptz
+  closed_at        DateTime? @db.Timestamptz
+  last_briefing_at DateTime? @db.Timestamptz
+
+  domains                   domains[]
+  signals                   signals[]
+  signal_events             signal_events[]
+  admission_audit           admission_audit[]
+  score_change_audit        score_change_audit[]
+  signal_connections        signal_connections[]
+  contradictions            contradictions[]
+  released_options          released_options[]
+  competition_sets          competition_sets[]
+  hypotheses                hypotheses[]
+  hypothesis_evidence       hypothesis_evidence[]
+  briefings                 briefings[]
+}
+
+model domains {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id     String   @db.Uuid
+  name        String
+  description String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  case                    cases                @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  signals                 signals[]
+  connections_as_a        signal_connections[] @relation("domain_a")
+  connections_as_b        signal_connections[] @relation("domain_b")
+  independence_as_a       domain_independence[] @relation("ind_domain_a")
+  independence_as_b       domain_independence[] @relation("ind_domain_b")
+  independence_history_a  domain_independence_history[] @relation("hist_domain_a")
+  independence_history_b  domain_independence_history[] @relation("hist_domain_b")
+
+  @@unique([case_id, name])
+  @@index([case_id])
+}
+
+model domain_independence {
+  domain_a_id        String   @db.Uuid
+  domain_b_id        String   @db.Uuid
+  is_independent     Boolean  @default(true)
+  independence_basis String?
+  created_at         DateTime @default(now()) @db.Timestamptz
+  updated_at         DateTime @default(now()) @db.Timestamptz
+
+  domainA  domains @relation("ind_domain_a", fields: [domain_a_id], references: [id])
+  domainB  domains @relation("ind_domain_b", fields: [domain_b_id], references: [id])
+
+  @@id([domain_a_id, domain_b_id])
+}
+
+model domain_independence_history {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  domain_a_id        String   @db.Uuid
+  domain_b_id        String   @db.Uuid
+  before_independent Boolean?
+  after_independent  Boolean
+  change_reason      String?
+  changed_at         DateTime @default(now()) @db.Timestamptz
+
+  domainA domains @relation("hist_domain_a", fields: [domain_a_id], references: [id])
+  domainB domains @relation("hist_domain_b", fields: [domain_b_id], references: [id])
+
+  @@index([domain_a_id, domain_b_id])
+}
+
+model signals {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id            String    @db.Uuid
+  domain_id          String?   @db.Uuid
+  content            String
+  observation_period Int?
+  submitted_at       DateTime  @default(now()) @db.Timestamptz
+  lifecycle_status   String    @default("CANDIDATE")
+  is_quarantined     Boolean   @default(false)
+  is_connected       Boolean   @default(false)
+  is_wsp_protected   Boolean   @default(false)
+  mismatch_type      String?
+  deviation_direction String?
+  shg_mode           String    @default("PENDING")
+  si_rate            Decimal?  @db.Decimal(4, 3)
+  si_direction       Decimal?  @db.Decimal(4, 3)
+  si_relationship    Decimal?  @db.Decimal(4, 3)
+  si_configuration   Decimal?  @db.Decimal(4, 3)
+  si_score           Decimal?  @db.Decimal(4, 3)
+  si_subcriteria     String?
+  sig_si             Decimal?  @db.Decimal(4, 3)
+  sig_persistence    Decimal?  @db.Decimal(4, 3)
+  sig_corroboration  Decimal?  @db.Decimal(4, 3)
+  sig_proximity      Decimal?  @db.Decimal(4, 3)
+  sig_rarity         Decimal?  @db.Decimal(4, 3)
+  sig_relevance      Decimal?  @db.Decimal(4, 3)
+  significance       Decimal?  @db.Decimal(4, 3)
+  admitted_at        DateTime? @db.Timestamptz
+  admission_reason   String?
+  rejection_reason   String?
+  rejection_lp       String?
+  resolved_at        DateTime? @db.Timestamptz
+  resolution_basis   String?
+  original_signal_id String?   @db.Uuid
+  ai_si_score        Decimal?  @db.Decimal(4, 3)
+  ai_significance    Decimal?  @db.Decimal(4, 3)
+  ai_reasoning       String?
+
+  case                    cases                @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  domain                  domains?             @relation(fields: [domain_id], references: [id])
+  original_signal         signals?             @relation("recurrence", fields: [original_signal_id], references: [id])
+  recurrences             signals[]            @relation("recurrence")
+  signal_events           signal_events[]
+  admission_audit         admission_audit[]
+  score_change_audit      score_change_audit[]
+  connections_as_a        signal_connections[] @relation("signal_a")
+  connections_as_b        signal_connections[] @relation("signal_b")
+  contradictions_as_a     contradictions[]     @relation("contra_a")
+  contradictions_as_b     contradictions[]     @relation("contra_b")
+  resolved_contradictions contradictions[]     @relation("resolved_signal")
+  released_options        released_options[]
+  hypothesis_evidence     hypothesis_evidence[]
+
+  @@index([case_id])
+  @@index([domain_id])
+  @@index([case_id, lifecycle_status])
+  @@index([case_id, significance(sort: Desc)])
+  @@index([case_id, si_score(sort: Desc)])
+}
+
+model signal_events {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  signal_id         String   @db.Uuid
+  case_id           String   @db.Uuid
+  from_status       String?
+  to_status         String
+  governance_change String?
+  reason            String
+  lp_flag           String?
+  job_run_id        String?  @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz
+
+  signal signals @relation(fields: [signal_id], references: [id], onDelete: Cascade)
+  case   cases   @relation(fields: [case_id], references: [id])
+
+  @@index([signal_id])
+  @@index([case_id, created_at(sort: Desc)])
+}
+
+model admission_audit {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  signal_id        String   @db.Uuid
+  case_id          String   @db.Uuid
+  decision         String
+  si_score         Decimal? @db.Decimal(4, 3)
+  significance     Decimal? @db.Decimal(4, 3)
+  si_threshold     Decimal  @db.Decimal(4, 3)
+  sig_threshold    Decimal  @db.Decimal(4, 3)
+  rejection_reason String?
+  decided_at       DateTime @default(now()) @db.Timestamptz
+
+  signal signals @relation(fields: [signal_id], references: [id])
+  case   cases   @relation(fields: [case_id], references: [id])
+
+  @@index([case_id])
+  @@index([case_id, decision])
+}
+
+model score_change_audit {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  signal_id                String   @db.Uuid
+  case_id                  String   @db.Uuid
+  changed_by               String   @default("INVESTIGATOR")
+  before_si_score          Decimal? @db.Decimal(4, 3)
+  after_si_score           Decimal? @db.Decimal(4, 3)
+  before_si_rate           Decimal? @db.Decimal(4, 3)
+  after_si_rate            Decimal? @db.Decimal(4, 3)
+  before_si_direction      Decimal? @db.Decimal(4, 3)
+  after_si_direction       Decimal? @db.Decimal(4, 3)
+  before_si_relationship   Decimal? @db.Decimal(4, 3)
+  after_si_relationship    Decimal? @db.Decimal(4, 3)
+  before_si_configuration  Decimal? @db.Decimal(4, 3)
+  after_si_configuration   Decimal? @db.Decimal(4, 3)
+  before_significance      Decimal? @db.Decimal(4, 3)
+  after_significance       Decimal? @db.Decimal(4, 3)
+  reason                   String
+  changed_at               DateTime @default(now()) @db.Timestamptz
+
+  signal signals @relation(fields: [signal_id], references: [id])
+  case   cases   @relation(fields: [case_id], references: [id])
+
+  @@index([signal_id])
+  @@index([case_id])
+}
+
+model signal_connections {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id                 String    @db.Uuid
+  signal_a_id             String    @db.Uuid
+  signal_b_id             String    @db.Uuid
+  domain_a_id             String    @db.Uuid
+  domain_b_id             String    @db.Uuid
+  mismatch_type_match     Boolean   @default(false)
+  dimension_match         Boolean   @default(false)
+  temporal_match          Boolean   @default(false)
+  direction_match         Boolean   @default(false)
+  correspondence_strength Decimal   @db.Decimal(4, 3)
+  domains_independent     Boolean
+  independence_basis      String?
+  shg_triggered           Boolean   @default(false)
+  shg_triggered_at        DateTime? @db.Timestamptz
+  hypothesis_id           String?   @db.Uuid
+  created_at              DateTime  @default(now()) @db.Timestamptz
+
+  case      cases      @relation(fields: [case_id], references: [id])
+  signal_a  signals    @relation("signal_a", fields: [signal_a_id], references: [id])
+  signal_b  signals    @relation("signal_b", fields: [signal_b_id], references: [id])
+  domain_a  domains    @relation("domain_a", fields: [domain_a_id], references: [id])
+  domain_b  domains    @relation("domain_b", fields: [domain_b_id], references: [id])
+  hypothesis hypotheses? @relation("connection_hypothesis")
+
+  @@unique([signal_a_id, signal_b_id])
+  @@index([case_id])
+  @@index([case_id, shg_triggered])
+}
+
+model contradictions {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id            String    @db.Uuid
+  signal_a_id        String    @db.Uuid
+  signal_b_id        String    @db.Uuid
+  description        String
+  status             String    @default("ACTIVE")
+  resolution_type    String?
+  resolution_basis   String?
+  resolved_signal_id String?   @db.Uuid
+  resolved_at        DateTime? @db.Timestamptz
+  created_at         DateTime  @default(now()) @db.Timestamptz
+
+  case            cases    @relation(fields: [case_id], references: [id])
+  signal_a        signals  @relation("contra_a", fields: [signal_a_id], references: [id])
+  signal_b        signals  @relation("contra_b", fields: [signal_b_id], references: [id])
+  resolved_signal signals? @relation("resolved_signal", fields: [resolved_signal_id], references: [id])
+  released_options released_options[]
+
+  @@unique([signal_a_id, signal_b_id])
+  @@index([case_id])
+}
+
+model released_options {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id          String    @db.Uuid
+  contradiction_id String?   @db.Uuid
+  signal_id        String?   @db.Uuid
+  text             String
+  is_active        Boolean   @default(true)
+  flagged_at       DateTime? @db.Timestamptz
+  unflag_reason    String?
+  created_at       DateTime  @default(now()) @db.Timestamptz
+
+  case         cases          @relation(fields: [case_id], references: [id])
+  contradiction contradictions? @relation(fields: [contradiction_id], references: [id])
+  signal       signals?        @relation(fields: [signal_id], references: [id])
+
+  @@index([case_id, is_active])
+}
+
+model competition_sets {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id     String   @db.Uuid
+  description String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  case       cases        @relation(fields: [case_id], references: [id])
+  hypotheses hypotheses[]
+}
+
+model hypotheses {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id                    String    @db.Uuid
+  title                      String
+  description                String
+  hypothesis_type            String
+  plausibility               Decimal   @default(0.50) @db.Decimal(4, 3)
+  plausibility_basis         String?
+  status                     String    @default("ACTIVE")
+  competition_set_id         String?   @db.Uuid
+  generated_by               String    @default("SHG")
+  connection_id              String?   @unique @db.Uuid
+  independence_basis_changed Boolean   @default(false)
+  needs_resolution_review    Boolean   @default(false)
+  resolved_at                DateTime? @db.Timestamptz
+  resolution_basis           String?
+  created_at                 DateTime  @default(now()) @db.Timestamptz
+  updated_at                 DateTime  @default(now()) @db.Timestamptz
+
+  case            cases              @relation(fields: [case_id], references: [id])
+  competition_set competition_sets?  @relation(fields: [competition_set_id], references: [id])
+  connection      signal_connections? @relation("connection_hypothesis", fields: [connection_id], references: [id])
+  evidence        hypothesis_evidence[]
+  plausibility_history plausibility_history[]
+
+  @@index([case_id])
+  @@index([case_id, status])
+}
+
+model hypothesis_evidence {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hypothesis_id     String   @db.Uuid
+  case_id           String   @db.Uuid
+  signal_id         String?  @db.Uuid
+  content           String
+  evidence_type     String
+  weight            Decimal  @default(0.50) @db.Decimal(4, 3)
+  plausibility_delta Decimal? @db.Decimal(5, 4)
+  submitted_at      DateTime @default(now()) @db.Timestamptz
+
+  hypothesis hypotheses @relation(fields: [hypothesis_id], references: [id], onDelete: Cascade)
+  case       cases      @relation(fields: [case_id], references: [id])
+  signal     signals?   @relation(fields: [signal_id], references: [id])
+  plausibility_history plausibility_history[]
+
+  @@unique([hypothesis_id, signal_id])
+  @@index([hypothesis_id])
+  @@index([signal_id])
+}
+
+model plausibility_history {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hypothesis_id String   @db.Uuid
+  plausibility  Decimal  @db.Decimal(4, 3)
+  reason        String
+  evidence_id   String?  @db.Uuid
+  job_run_id    String?  @db.Uuid
+  recorded_at   DateTime @default(now()) @db.Timestamptz
+
+  hypothesis hypotheses          @relation(fields: [hypothesis_id], references: [id])
+  evidence   hypothesis_evidence? @relation(fields: [evidence_id], references: [id])
+
+  @@index([hypothesis_id, recorded_at])
+}
+
+model briefings {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id             String   @db.Uuid
+  signals_candidate   Int      @default(0)
+  signals_admitted    Int      @default(0)
+  signals_retained    Int      @default(0)
+  signals_quarantined Int      @default(0)
+  signals_connected   Int      @default(0)
+  signals_assessed    Int      @default(0)
+  signals_resolved    Int      @default(0)
+  signals_archived    Int      @default(0)
+  signals_expired     Int      @default(0)
+  lp_flags_since_last String[]
+  summary             String?
+  content             Json
+  generated_at        DateTime @default(now()) @db.Timestamptz
+
+  case cases @relation(fields: [case_id], references: [id])
+
+  @@index([case_id, generated_at(sort: Desc)])
+}
+
+model job_runs {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_name         String
+  started_at       DateTime  @default(now()) @db.Timestamptz
+  completed_at     DateTime? @db.Timestamptz
+  records_affected Int       @default(0)
+  status           String    @default("RUNNING")
+  error_message    String?
+
+  @@index([job_name, started_at(sort: Desc)])
+}
+
+model analytics_snapshots {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  snapshot_at                  DateTime @default(now()) @db.Timestamptz
+  total_cases                  Int      @default(0)
+  total_domains                Int      @default(0)
+  total_signals_submitted      Int      @default(0)
+  total_signals_admitted       Int      @default(0)
+  total_hypotheses             Int      @default(0)
+  total_hypotheses_confirmed   Int      @default(0)
+  total_contradictions         Int      @default(0)
+  total_contradictions_resolved Int     @default(0)
+  total_briefings              Int      @default(0)
+  lp1_count                    Int      @default(0)
+  lp2_count                    Int      @default(0)
+  lp3_count                    Int      @default(0)
+  lp4_count                    Int      @default(0)
+  lp5_count                    Int      @default(0)
+  lp6_count                    Int      @default(0)
+  lp7_count                    Int      @default(0)
+  admission_rate               Decimal? @db.Decimal(5, 4)
+  hcl_confirmation_rate        Decimal? @db.Decimal(5, 4)
+  shg_trigger_rate             Decimal? @db.Decimal(5, 4)
+  avg_si_score                 Decimal? @db.Decimal(4, 3)
+  avg_significance             Decimal? @db.Decimal(4, 3)
+}

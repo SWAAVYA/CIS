@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #080810;
+  --surface: #0f0f1a;
+  --surface2: #141422;
+  --border: #1a1a2e;
+  --border2: #252540;
+  --signal-candidate: #4a4a6a;
+  --signal-admitted: #4f7fc9;
+  --signal-retained: #4f9e6f;
+  --signal-assessed: #4f9faf;
+  --signal-resolved: #3a3a5a;
+  --signal-archived: #2a2a3a;
+  --signal-expired: #2a2a2a;
+  --hypothesis-active: #9e7f4f;
+  --hypothesis-confirmed: #4f9e6f;
+  --hypothesis-falsified: #c94f4f;
+  --lp-flag: #e8a030;
+  --accent: #c8b87a;
+  --text: #d0d0e8;
+  --text-muted: #606078;
+  --text-dim: #303048;
+  --red: #c94f4f;
+  --red-dim: #7a3030;
+  --green: #4f9e6f;
+  --green-dim: #2a5a40;
+  --blue: #4f7fc9;
+  --flag: #e8a030;
+  --flag-bg: #1e1408;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+}
