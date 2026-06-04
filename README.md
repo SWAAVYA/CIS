@@ -16,7 +16,7 @@ Most investigation systems try to explain everything. CIS does something differe
 
 ## Two operating modes
 
-**AI mode** (requires Anthropic API key)
+**AI mode** (requires AI API key)
 Document intake — paste a paper or report and the system extracts structurally relevant observations automatically. Cross-field synthesis — compare documents from different fields and the system finds structural correspondence between them.
 
 **Manual mode** (no API key needed)
@@ -84,4 +84,4 @@ CIS uses a three-layer architecture. **Layer 1 (Operational)** manages the signa
 
 - **API:** Node.js, Express, TypeScript, Prisma, PostgreSQL
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, Recharts
-- **AI:** Anthropic Claude (optional — system degrades gracefully without it)
+- **AI:** AI provider \(optional — system degrades gracefully without it)

@@ -1,9 +1,13 @@
+CIS_spec/
+CIS_/
 node_modules/
 dist/
 .env
 *.env.local
 .DS_Store
 *.log
+server.log
+server.err
 prisma/migrations/dev.*
 apps/web/dist/
 apps/api/dist/

@@ -1,4 +1,4 @@
-﻿import { Router, Request } from 'express';
+import { Router, Request } from 'express';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../prisma.js';
@@ -63,7 +63,7 @@ function parseAIJson(text: string): unknown {
 
 const PROMPT_1_SYSTEM = `You are an observation extractor for a cognitive intelligence system that studies structural anomalies across independent information domains.
 
-Your task: read the provided document and identify observations that show structural incongruence â€” meaning the observation reports something that deviates structurally from what its context would predict.
+Your task: read the provided document and identify observations that show structural incongruence — meaning the observation reports something that deviates structurally from what its context would predict.
 
 For each relevant observation you find, return:
 
@@ -159,7 +159,7 @@ For each structural correspondence you find, return:
   "correspondence_type": "MISMATCH_TYPE" | "DIRECTION" | "TEMPORAL" | "CONFIGURATION",
   "correspondence_strength": 0.0-1.0,
   "structural_note": "why these observations are structurally similar despite being from different fields",
-  "candidate_shared_cause": "one sentence: what type of missing variable could explain both observations simultaneously. Use tentative language â€” this is a hypothesis, not a conclusion.",
+  "candidate_shared_cause": "one sentence: what type of missing variable could explain both observations simultaneously. Use tentative language — this is a hypothesis, not a conclusion.",
   "observation_period_match": true | false
 }
 
@@ -174,11 +174,13 @@ If no correspondences exist, return an empty array with a note.
 
 Do not force correspondences. A genuine absence of structural correspondence is a valid and useful finding.`;
 
-async function callClaude(systemPrompt: string, userMessage: string): Promise<string> {
+const AI_MODEL = process.env.AI_MODEL ?? 'claude-sonnet-4-6';
+
+async function callAI(systemPrompt: string, userMessage: string): Promise<string> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic();
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: AI_MODEL,
     max_tokens: 2048,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
@@ -212,7 +214,7 @@ async function runAdmission(
   const decision = meetsSignificance ? 'ADMITTED' : 'SUB_THRESHOLD_RETAINED';
   const reason = meetsSignificance
     ? `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} above threshold ${SIG_THRESHOLD}.`
-    : `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} below threshold ${SIG_THRESHOLD} â€” admitted per WSP sub-threshold preservation.`;
+    : `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} below threshold ${SIG_THRESHOLD} — admitted per WSP sub-threshold preservation.`;
 
   await tx.signals.update({
     where: { id: signalId },
@@ -239,7 +241,7 @@ async function runAdmission(
 router.post('/document', async (req: WithCaseId, res, next) => {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
-      return res.status(503).json({ error: 'Document processing requires ANTHROPIC_API_KEY', code: 'AI_UNAVAILABLE', status: 503 });
+      return res.status(503).json({ error: 'Document processing requires an AI API key configured on the server', code: 'AI_UNAVAILABLE', status: 503 });
     }
     const caseId = req.params.id;
     await prisma.cases.findUniqueOrThrow({ where: { id: caseId } });
@@ -250,7 +252,7 @@ router.post('/document', async (req: WithCaseId, res, next) => {
     }
     const { content } = docParsed.data;
 
-    const text = await callClaude(PROMPT_1_SYSTEM, content);
+    const text = await callAI(PROMPT_1_SYSTEM, content);
     let candidates: unknown;
     try {
       candidates = parseAIJson(text);
@@ -266,7 +268,7 @@ router.post('/document', async (req: WithCaseId, res, next) => {
 router.post('/data', async (req: WithCaseId, res, next) => {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
-      return res.status(503).json({ error: 'Document processing requires ANTHROPIC_API_KEY', code: 'AI_UNAVAILABLE', status: 503 });
+      return res.status(503).json({ error: 'Document processing requires an AI API key configured on the server', code: 'AI_UNAVAILABLE', status: 503 });
     }
     const caseId = req.params.id;
     await prisma.cases.findUniqueOrThrow({ where: { id: caseId } });
@@ -275,7 +277,7 @@ router.post('/data', async (req: WithCaseId, res, next) => {
     if (!csv) return res.status(400).json({ error: 'csv required', code: 'MISSING_FIELD', status: 400 });
 
     const userMessage = `Column definitions:\n${JSON.stringify(column_definitions, null, 2)}\n\nData:\n${csv}`;
-    const text = await callClaude(PROMPT_2_SYSTEM, userMessage);
+    const text = await callAI(PROMPT_2_SYSTEM, userMessage);
     let candidates: unknown;
     try {
       candidates = parseAIJson(text);
@@ -291,7 +293,7 @@ router.post('/data', async (req: WithCaseId, res, next) => {
 router.post('/synthesize', async (req: WithCaseId, res, next) => {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
-      return res.status(503).json({ error: 'Document processing requires ANTHROPIC_API_KEY', code: 'AI_UNAVAILABLE', status: 503 });
+      return res.status(503).json({ error: 'Document processing requires an AI API key configured on the server', code: 'AI_UNAVAILABLE', status: 503 });
     }
     const caseId = req.params.id;
     await prisma.cases.findUniqueOrThrow({ where: { id: caseId } });
@@ -306,8 +308,8 @@ router.post('/synthesize', async (req: WithCaseId, res, next) => {
     await prisma.domains.findUniqueOrThrow({ where: { id: domain_b.domain_id } });
 
     const [textA, textB] = await Promise.all([
-      callClaude(PROMPT_1_SYSTEM, domain_a.content),
-      callClaude(PROMPT_1_SYSTEM, domain_b.content),
+      callAI(PROMPT_1_SYSTEM, domain_a.content),
+      callAI(PROMPT_1_SYSTEM, domain_b.content),
     ]);
 
     let candidates_a: unknown, candidates_b: unknown;
@@ -319,7 +321,7 @@ router.post('/synthesize', async (req: WithCaseId, res, next) => {
     }
 
     const synthMessage = `Domain A observations:\n${JSON.stringify(candidates_a)}\n\nDomain B observations:\n${JSON.stringify(candidates_b)}`;
-    const textCorr = await callClaude(PROMPT_3_SYSTEM, synthMessage);
+    const textCorr = await callAI(PROMPT_3_SYSTEM, synthMessage);
     let correspondences: unknown;
     try { correspondences = parseAIJson(textCorr); } catch {
       return res.status(422).json({ error: 'AI response parsing failed for correspondences', raw: textCorr, status: 422 });

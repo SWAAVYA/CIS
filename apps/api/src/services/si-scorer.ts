@@ -106,7 +106,7 @@ async function scoreWithAI(content: string): Promise<SIResult> {
   const client = new Anthropic();
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: process.env.AI_MODEL ?? 'claude-sonnet-4-6',
     max_tokens: 512,
     messages: [{
       role: 'user',
