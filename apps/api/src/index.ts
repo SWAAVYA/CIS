@@ -53,8 +53,9 @@ app.get('/health', async (_req, res) => {
   try {
     await prisma.$executeRaw`SELECT 1`;
     res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
-  } catch {
-    res.status(503).json({ status: 'error', db: 'disconnected', timestamp: new Date().toISOString() });
+  } catch (err) {
+    console.error('[health] DB check failed:', err);
+    res.status(503).json({ status: 'error', db: 'disconnected', error: String(err), timestamp: new Date().toISOString() });
   }
 });
 
