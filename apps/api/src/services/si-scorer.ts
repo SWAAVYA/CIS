@@ -83,8 +83,6 @@ const HIGH_INDICATORS = {
 
 const LOW_INDICATORS = ['stable', 'within normal range', 'as expected', 'nominal', 'unchanged', 'within tolerance', 'seemed completely normal', 'seemed normal', 'nothing unusual'];
 
-const LOW_INDICATORS = ['stable', 'within normal range', 'as expected', 'nominal', 'unchanged', 'within tolerance'];
-
 const MISMATCH_TYPE_KEYWORDS: Record<string, string[]> = {
   RATE:          ['accelerat', 'rate of change', 'faster than', 'slowing'],
   DIRECTION:     ['monoton', 'unidirection', 'no reversal', 'consistently increasing'],
