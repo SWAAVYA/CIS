@@ -5,52 +5,83 @@ const WEIGHTS = { rate: 0.20, direction: 0.20, relationship: 0.25, configuration
 
 const HIGH_INDICATORS = {
   rate: [
-    // Original technical terms
+    // Technical / scientific
     'accelerating', 'rapid increase', 'rate of change', 'faster than', 'slowing significantly',
-    // Investigation language — quantity mismatches
     'deviation', 'deviated', 'deviates', 'off by', 'wrong by', 'discrepancy', 'mismatch',
     'inconsistent', 'anomalous', 'anomaly', 'abnormal', 'unexpected result', 'unexplained',
-    'residual', 'residuals', 'percent off', '% deviation', '% off', '% above', '% below',
+    'residual', 'residuals', '% deviation', '% off', '% above', '% below',
     'exceeded', 'below expected', 'above expected', 'outside expected', 'outside normal',
     'fault', 'malfunction', 'failed', 'failure', 'error', 'wrong altitude', 'wrong trajectory',
     'overdose', 'excess dose', 'excessive', 'extreme dose', 'massive dose',
+    // Everyday investigation language — something is out of place
+    'never seen', 'never seen before', 'had not seen', 'never noticed', 'first time',
+    'out of character', 'unusual', 'not normal', 'not typical', 'unlike', 'unexpected',
+    'no record', 'no entry', 'no card scan', 'no log', 'no trace', 'no sign',
+    'did not arrive', 'never arrived', 'marked absent', 'absent', 'missing',
+    'unregistered', 'not registered', 'prepaid', 'anonymous', 'unknown number',
+    'largest', 'highest ever', 'biggest', 'in 90 days', 'in 30 days', 'in weeks', 'in months',
+    'not seen before', 'had never', 'without explanation', 'cannot explain', 'unexplained',
+    'wrong location', 'different location', 'not where', 'placed him', 'placed her',
+    'cell tower', 'tower ping', 'did not ping', 'phone located', 'phone was at',
+    'cash withdrawal', 'withdrew', 'withdrawal',
   ],
   direction: [
-    // Original technical terms
+    // Technical
     'monotonically', 'monotonic', 'consistently increasing', 'only moving in one direction', 'no reversal', 'unidirectional',
-    // Investigation language — accumulation and trend
     'accumulating', 'accumulation', 'building up', 'progressive', 'growing over', 'escalating',
     'compounding', 'systematic', 'persistent', 'continued', 'recurring', 'repeated occurrences',
     'worsening', 'deteriorating', 'increasing over', 'across periods', 'over time',
     'multiple instances', 'multiple occurrences', 'each period', 'every period',
     'pattern of', 'consistent pattern', 'directional', 'trend of',
+    // Everyday — accumulation over time
+    'three separate', 'four separate', 'multiple transfers', 'multiple calls', 'multiple times',
+    'in the days before', 'in the weeks before', 'over the past', 'leading up to',
+    '11 calls', '10 calls', 'repeated calls', 'called back', 'called again',
+    'each from different', 'different accounts', 'separate accounts',
+    'several times', 'again and again', 'more than once', 'on multiple occasions',
+    'over 4 days', 'over 10 days', 'over several days', 'in the 4 days', 'in the 10 days',
+    'totalling', 'total of', 'combined total',
   ],
   relationship: [
-    // Original technical terms
+    // Technical
     'diverging from', 'no longer tracking', 'decoupled', 'disconnected from', 'moved independently',
-    // Investigation language — structural contrast between sources
     'inconsistent with', 'contradicts', 'conflicts with', 'at odds with', 'incompatible with',
     'despite', 'contrary to', 'yet the', 'but the', 'however the', 'although the',
     'shows nominal', 'shows normal', 'reported normal', 'indicated normal', 'reads nominal',
     'while actual', 'versus expected', 'vs expected', 'actual vs', 'vs actual',
-    'console showed', 'console shows', 'display showed', 'display shows', 'reported as nominal',
-    'self-diagnostic', 'self diagnostic', 'unit reports nominal', 'sensor reports nominal',
     'found it inconsistent', 'not match', 'does not match', 'did not match',
-    'independent of', 'independent from', 'no shared', 'separate from',
-    'operator console', 'no fault flag', 'no fault', 'no error flag',
+    'no fault flag', 'no fault', 'no error flag',
+    // Everyday — two things that should agree but do not
+    'says he was', 'claims he was', 'stated he was', 'says she was', 'claimed to be',
+    'but phone', 'but records show', 'but records indicate', 'but camera shows',
+    'phone shows', 'phone records show', 'records contradict', 'records place',
+    'inconsistent with his', 'inconsistent with her', 'inconsistent with stated',
+    'not where he said', 'not where she said', 'different from what',
+    'alibi', 'false alibi', 'impossible', 'physically impossible', 'could not have been',
+    'store was closed', 'closed that day', 'not open', 'was not there',
+    'confirmed he was not', 'confirmed she was not', 'was not present',
+    '3km', 'kilometres away', 'miles away', 'km north', 'km south', 'km away',
+    'independent source', 'two sources', 'separate sources confirm',
   ],
   configuration: [
-    // Original technical terms
+    // Technical
     'simultaneously approaching', 'multiple dimensions', 'concurrent boundary', 'all measures', 'combined pressure',
-    // Investigation language — multi-source or multi-system patterns
     'multiple systems', 'multiple domains', 'multiple sites', 'multiple hospitals', 'multiple units',
-    'across all', 'across both', 'across four', 'across three', 'in both', 'in all', 'throughout',
-    'system-wide', 'both units', 'both domains', 'all four', 'all three', 'all hospitals',
-    'compound', 'combined', 'simultaneous', 'concurrent',
-    'shared cause', 'common cause', 'common to both', 'common across', 'same pattern',
-    'all deployed', 'identical across', 'same codebase', 'same software',
+    'across all', 'across both', 'system-wide', 'compound', 'combined', 'simultaneous', 'concurrent',
+    'shared cause', 'common cause', 'same pattern', 'identical across', 'same codebase',
+    // Everyday — multiple things pointing the same direction
+    'same time', 'same morning', 'same window', 'same day', 'that morning',
+    'minutes before', 'hours before', '17 minutes', 'just before',
+    'same car', 'matching description', 'man matching', 'woman matching', 'person matching',
+    'both domains', 'phone and financial', 'money and calls', 'location and finance',
+    'at the same time', 'at the same location', 'at the same place',
+    'converging on', 'all pointing to', 'all pointing toward',
+    'two independent', 'three independent', 'independent witnesses',
+    'same number', 'same account', 'same location', 'same period',
   ],
 };
+
+const LOW_INDICATORS = ['stable', 'within normal range', 'as expected', 'nominal', 'unchanged', 'within tolerance', 'seemed completely normal', 'seemed normal', 'nothing unusual'];
 
 const LOW_INDICATORS = ['stable', 'within normal range', 'as expected', 'nominal', 'unchanged', 'within tolerance'];
 
