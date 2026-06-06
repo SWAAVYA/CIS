@@ -112,6 +112,60 @@ export function ContradictionLedger() {
   )
 }
 
+function SignalPicker({
+  label,
+  signals,
+  selectedId,
+  disabledId,
+  onChange,
+}: {
+  label: string
+  signals: Signal[]
+  selectedId: string
+  disabledId: string
+  onChange: (id: string) => void
+}) {
+  const selected = signals.find(s => s.id === selectedId)
+  return (
+    <div>
+      <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+        {label} *
+      </label>
+      {selected && (
+        <div className="mb-1 px-3 py-2 text-xs font-mono" style={{ background: '#1a2a1a', border: '1px solid var(--green)', color: 'var(--green)' }}>
+          ✓ {selected.content}
+        </div>
+      )}
+      <div className="max-h-40 overflow-y-auto" style={{ border: '1px solid var(--border2)' }}>
+        {signals.length === 0 && (
+          <p className="px-3 py-2 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>No active signals available.</p>
+        )}
+        {signals.map(s => {
+          const isSelected = s.id === selectedId
+          const isDisabled = s.id === disabledId
+          return (
+            <button
+              key={s.id}
+              onClick={() => !isDisabled && onChange(s.id)}
+              disabled={isDisabled}
+              className="w-full text-left px-3 py-2 text-xs font-mono disabled:opacity-40"
+              style={{
+                background: isSelected ? 'var(--surface2)' : 'transparent',
+                color: isSelected ? 'var(--accent)' : 'var(--text)',
+                borderBottom: '1px solid var(--border)',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <span className="mr-2 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>[{s.lifecycle_status}]</span>
+              {s.content}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function RegisterContradictionModal({
   signals,
   isPending,
@@ -133,7 +187,7 @@ function RegisterContradictionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#00000088' }}>
-      <div className="w-full max-w-xl overflow-y-auto max-h-screen" style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}>
+      <div className="w-full max-w-2xl overflow-y-auto max-h-[90vh]" style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}>
         <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
           <span className="font-mono text-xs uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Register Contradiction</span>
           <button onClick={onClose} className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>✕</button>
@@ -144,43 +198,8 @@ function RegisterContradictionModal({
             A contradiction places both signals in Quarantine until resolved via RC-1, RC-2, or RC-3.
           </p>
 
-          <div>
-            <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-              Signal A *
-            </label>
-            <select
-              value={signalAId}
-              onChange={e => setSignalAId(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded font-mono"
-              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
-            >
-              <option value="">— select a signal —</option>
-              {signals.map(s => (
-                <option key={s.id} value={s.id} disabled={s.id === signalBId}>
-                  [{s.lifecycle_status}] {s.content.slice(0, 70)}{s.content.length > 70 ? '…' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-              Signal B *
-            </label>
-            <select
-              value={signalBId}
-              onChange={e => setSignalBId(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded font-mono"
-              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
-            >
-              <option value="">— select a signal —</option>
-              {signals.map(s => (
-                <option key={s.id} value={s.id} disabled={s.id === signalAId}>
-                  [{s.lifecycle_status}] {s.content.slice(0, 70)}{s.content.length > 70 ? '…' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SignalPicker label="Signal A" signals={signals} selectedId={signalAId} disabledId={signalBId} onChange={setSignalAId} />
+          <SignalPicker label="Signal B" signals={signals} selectedId={signalBId} disabledId={signalAId} onChange={setSignalBId} />
 
           <div>
             <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
