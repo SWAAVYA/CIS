@@ -4,10 +4,52 @@ import prisma from '../prisma.js';
 const WEIGHTS = { rate: 0.20, direction: 0.20, relationship: 0.25, configuration: 0.35 };
 
 const HIGH_INDICATORS = {
-  rate:          ['accelerating', 'rapid increase', 'rate of change', 'faster than', 'slowing significantly'],
-  direction:     ['monotonically', 'monotonic', 'consistently increasing', 'only moving in one direction', 'no reversal', 'unidirectional'],
-  relationship:  ['diverging from', 'no longer tracking', 'decoupled', 'disconnected from', 'moved independently'],
-  configuration: ['simultaneously approaching', 'multiple dimensions', 'concurrent boundary', 'all measures', 'combined pressure'],
+  rate: [
+    // Original technical terms
+    'accelerating', 'rapid increase', 'rate of change', 'faster than', 'slowing significantly',
+    // Investigation language — quantity mismatches
+    'deviation', 'deviated', 'deviates', 'off by', 'wrong by', 'discrepancy', 'mismatch',
+    'inconsistent', 'anomalous', 'anomaly', 'abnormal', 'unexpected result', 'unexplained',
+    'residual', 'residuals', 'percent off', '% deviation', '% off', '% above', '% below',
+    'exceeded', 'below expected', 'above expected', 'outside expected', 'outside normal',
+    'fault', 'malfunction', 'failed', 'failure', 'error', 'wrong altitude', 'wrong trajectory',
+    'overdose', 'excess dose', 'excessive', 'extreme dose', 'massive dose',
+  ],
+  direction: [
+    // Original technical terms
+    'monotonically', 'monotonic', 'consistently increasing', 'only moving in one direction', 'no reversal', 'unidirectional',
+    // Investigation language — accumulation and trend
+    'accumulating', 'accumulation', 'building up', 'progressive', 'growing over', 'escalating',
+    'compounding', 'systematic', 'persistent', 'continued', 'recurring', 'repeated occurrences',
+    'worsening', 'deteriorating', 'increasing over', 'across periods', 'over time',
+    'multiple instances', 'multiple occurrences', 'each period', 'every period',
+    'pattern of', 'consistent pattern', 'directional', 'trend of',
+  ],
+  relationship: [
+    // Original technical terms
+    'diverging from', 'no longer tracking', 'decoupled', 'disconnected from', 'moved independently',
+    // Investigation language — structural contrast between sources
+    'inconsistent with', 'contradicts', 'conflicts with', 'at odds with', 'incompatible with',
+    'despite', 'contrary to', 'yet the', 'but the', 'however the', 'although the',
+    'shows nominal', 'shows normal', 'reported normal', 'indicated normal', 'reads nominal',
+    'while actual', 'versus expected', 'vs expected', 'actual vs', 'vs actual',
+    'console showed', 'console shows', 'display showed', 'display shows', 'reported as nominal',
+    'self-diagnostic', 'self diagnostic', 'unit reports nominal', 'sensor reports nominal',
+    'found it inconsistent', 'not match', 'does not match', 'did not match',
+    'independent of', 'independent from', 'no shared', 'separate from',
+    'operator console', 'no fault flag', 'no fault', 'no error flag',
+  ],
+  configuration: [
+    // Original technical terms
+    'simultaneously approaching', 'multiple dimensions', 'concurrent boundary', 'all measures', 'combined pressure',
+    // Investigation language — multi-source or multi-system patterns
+    'multiple systems', 'multiple domains', 'multiple sites', 'multiple hospitals', 'multiple units',
+    'across all', 'across both', 'across four', 'across three', 'in both', 'in all', 'throughout',
+    'system-wide', 'both units', 'both domains', 'all four', 'all three', 'all hospitals',
+    'compound', 'combined', 'simultaneous', 'concurrent',
+    'shared cause', 'common cause', 'common to both', 'common across', 'same pattern',
+    'all deployed', 'identical across', 'same codebase', 'same software',
+  ],
 };
 
 const LOW_INDICATORS = ['stable', 'within normal range', 'as expected', 'nominal', 'unchanged', 'within tolerance'];
@@ -59,8 +101,13 @@ function scoreRuleBased(content: string): SIResult {
 
   const scoreDimension = (indicators: string[]): number => {
     const hits = indicators.filter(w => lower.includes(w)).length;
-    const raw = hits - lowPenalty;
-    return Math.min(1.0, Math.max(0.0, raw / Math.max(indicators.length, 1)));
+    // Only apply low penalty when there are no high hits — a signal that says
+    // "nominal BUT inconsistent" is a structural contrast, not a low-SI signal.
+    const effectivePenalty = hits > 0 ? 0 : lowPenalty;
+    const raw = hits - effectivePenalty;
+    // Scale: 1 hit → ~0.40, 2 hits → ~0.72, 3+ hits → 1.0
+    // This ensures a single relevant keyword clears the SI_min threshold of 0.25.
+    return Math.min(1.0, Math.max(0.0, raw / 2.5));
   };
 
 

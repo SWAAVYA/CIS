@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useContradictions } from '../hooks/useContradictions'
-import { resolveContradiction } from '../api/client'
-import type { Contradiction, ResolutionType } from '../types'
+import { useSignals } from '../hooks/useSignals'
+import { resolveContradiction, createContradiction } from '../api/client'
+import type { Contradiction, ResolutionType, Signal } from '../types'
 
 const RC_OPTIONS: Array<{ type: ResolutionType; label: string; description: string }> = [
   {
@@ -29,7 +30,9 @@ export function ContradictionLedger() {
   const qc = useQueryClient()
 
   const { data: contradictions, isLoading } = useContradictions(caseId)
+  const { data: signals } = useSignals(caseId)
   const [resolveTarget, setResolveTarget] = useState<Contradiction | null>(null)
+  const [showRegister, setShowRegister] = useState(false)
 
   const resolveMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof resolveContradiction>[1] }) =>
@@ -40,9 +43,32 @@ export function ContradictionLedger() {
     },
   })
 
+  const registerMutation = useMutation({
+    mutationFn: ({ signal_a_id, signal_b_id, description }: { signal_a_id: string; signal_b_id: string; description: string }) =>
+      createContradiction(caseId, signal_a_id, signal_b_id, description),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contradictions', caseId] })
+      qc.invalidateQueries({ queryKey: ['signals', caseId] })
+      setShowRegister(false)
+    },
+  })
+
+  const activeSignals = (signals ?? []).filter(s =>
+    !['EXPIRED', 'ARCHIVED'].includes(s.lifecycle_status)
+  )
+
   return (
     <div className="p-6">
-      <h2 className="font-serif text-xl mb-6" style={{ color: 'var(--accent)' }}>Contradiction Ledger</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-xl" style={{ color: 'var(--accent)' }}>Contradiction Ledger</h2>
+        <button
+          onClick={() => setShowRegister(true)}
+          className="px-4 py-2 text-xs rounded font-mono uppercase tracking-widest"
+          style={{ background: 'var(--surface2)', color: 'var(--accent)', border: '1px solid var(--border2)' }}
+        >
+          + Register Contradiction
+        </button>
+      </div>
 
       {isLoading && <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>Loading...</p>}
 
@@ -72,6 +98,116 @@ export function ContradictionLedger() {
           }
         />
       )}
+
+      {showRegister && (
+        <RegisterContradictionModal
+          signals={activeSignals}
+          isPending={registerMutation.isPending}
+          error={registerMutation.error?.message}
+          onClose={() => setShowRegister(false)}
+          onConfirm={(a, b, desc) => registerMutation.mutate({ signal_a_id: a, signal_b_id: b, description: desc })}
+        />
+      )}
+    </div>
+  )
+}
+
+function RegisterContradictionModal({
+  signals,
+  isPending,
+  error,
+  onClose,
+  onConfirm,
+}: {
+  signals: Signal[]
+  isPending: boolean
+  error?: string
+  onClose: () => void
+  onConfirm: (signalAId: string, signalBId: string, description: string) => void
+}) {
+  const [signalAId, setSignalAId] = useState('')
+  const [signalBId, setSignalBId] = useState('')
+  const [description, setDescription] = useState('')
+
+  const canSubmit = signalAId && signalBId && signalAId !== signalBId && description.trim() && !isPending
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#00000088' }}>
+      <div className="w-full max-w-xl overflow-y-auto max-h-screen" style={{ background: 'var(--surface)', border: '1px solid var(--border2)' }}>
+        <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="font-mono text-xs uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Register Contradiction</span>
+          <button onClick={onClose} className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>✕</button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            A contradiction places both signals in Quarantine until resolved via RC-1, RC-2, or RC-3.
+          </p>
+
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+              Signal A *
+            </label>
+            <select
+              value={signalAId}
+              onChange={e => setSignalAId(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded font-mono"
+              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
+            >
+              <option value="">— select a signal —</option>
+              {signals.map(s => (
+                <option key={s.id} value={s.id} disabled={s.id === signalBId}>
+                  [{s.lifecycle_status}] {s.content.slice(0, 70)}{s.content.length > 70 ? '…' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+              Signal B *
+            </label>
+            <select
+              value={signalBId}
+              onChange={e => setSignalBId(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded font-mono"
+              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
+            >
+              <option value="">— select a signal —</option>
+              {signals.map(s => (
+                <option key={s.id} value={s.id} disabled={s.id === signalAId}>
+                  [{s.lifecycle_status}] {s.content.slice(0, 70)}{s.content.length > 70 ? '…' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+              Description *
+            </label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Signal A asserts X; Signal B asserts not-X."
+              className="w-full px-3 py-2 text-sm rounded font-mono resize-y"
+              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
+            />
+          </div>
+
+          {error && <p className="text-xs" style={{ color: 'var(--red)' }}>{error}</p>}
+
+          <button
+            onClick={() => onConfirm(signalAId, signalBId, description.trim())}
+            disabled={!canSubmit}
+            className="w-full px-4 py-2 text-sm rounded font-sans uppercase tracking-widest disabled:opacity-50"
+            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+          >
+            {isPending ? 'Registering...' : 'Register Contradiction'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
