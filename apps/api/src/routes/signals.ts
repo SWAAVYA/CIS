@@ -32,10 +32,14 @@ async function runAdmission(
   signalId: string,
   caseId: string,
   siScore: number,
-  significance: number
+  significance: number,
+  siMaxDimension = 0
 ): Promise<{ decision: string; reason: string }> {
-  if (siScore < SI_MIN_THRESHOLD) {
-    const reason = `SI score ${siScore} below SI_min ${SI_MIN_THRESHOLD}`;
+  const SI_DIM_THRESHOLD = 0.35;
+  const passesWeighted = siScore >= SI_MIN_THRESHOLD;
+  const passesDimension = siMaxDimension >= SI_DIM_THRESHOLD;
+  if (!passesWeighted && !passesDimension) {
+    const reason = `SI score ${siScore} below SI_min ${SI_MIN_THRESHOLD} and max dimension ${siMaxDimension} below ${SI_DIM_THRESHOLD}`;
     await tx.signals.update({
       where: { id: signalId },
       data: { lifecycle_status: 'EXPIRED', rejection_reason: reason, rejection_lp: 'LP-1' },
@@ -124,7 +128,8 @@ router.post('/:id/signals', async (req, res, next) => {
         data: { signal_id: signal.id, case_id: req.params.id, to_status: 'CANDIDATE', reason: 'Signal submitted' },
       });
 
-      const admission = await runAdmission(tx, signal.id, req.params.id, siResult.si_score, significance);
+      const siMaxDim = Math.max(siResult.si_rate, siResult.si_direction, siResult.si_relationship, siResult.si_configuration);
+      const admission = await runAdmission(tx, signal.id, req.params.id, siResult.si_score, significance, siMaxDim);
       const updated = await tx.signals.findUniqueOrThrow({ where: { id: signal.id } });
       return { signal: updated, admission };
     });
