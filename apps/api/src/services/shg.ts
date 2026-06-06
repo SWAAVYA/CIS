@@ -1,6 +1,6 @@
 import prisma from '../prisma.js';
 
-const SHG_CORR_THRESHOLD = parseFloat(process.env.SHG_CORR_THRESHOLD ?? '0.5');
+const SHG_CORR_THRESHOLD = parseFloat(process.env.SHG_CORR_THRESHOLD ?? '0.35');
 const SHG_INDEPENDENCE_THRESHOLD = parseFloat(process.env.SHG_INDEPENDENCE_THRESHOLD ?? '0.15');
 
 export async function generateHypothesis(
@@ -219,11 +219,19 @@ function computeCorrespondenceStrength(
   a: { mismatch_type: string | null; deviation_direction: string | null; observation_period: number | null },
   b: { mismatch_type: string | null; deviation_direction: string | null; observation_period: number | null }
 ): number {
-  const mismatchMatch = a.mismatch_type && b.mismatch_type && a.mismatch_type === b.mismatch_type;
-  const directionMatch = a.deviation_direction && b.deviation_direction && a.deviation_direction === b.deviation_direction;
+  const mismatchMatch = !!(a.mismatch_type && b.mismatch_type && a.mismatch_type === b.mismatch_type);
+  const directionMatch = !!(a.deviation_direction && b.deviation_direction && a.deviation_direction === b.deviation_direction);
+  const temporalMatch = a.observation_period !== null && b.observation_period !== null
+    && Math.abs(a.observation_period - b.observation_period) <= 1;
 
+  // Scoring matrix — temporal proximity is meaningful structural correspondence
+  // for cross-domain signals; mismatch+direction still yield the strongest score.
+  if (mismatchMatch && directionMatch && temporalMatch) return 0.90;
   if (mismatchMatch && directionMatch) return 0.75;
+  if (mismatchMatch && temporalMatch) return 0.65;
   if (mismatchMatch) return 0.50;
+  if (directionMatch && temporalMatch) return 0.55;
+  if (temporalMatch) return 0.40;
   if (directionMatch) return 0.25;
   return 0.0;
 }
