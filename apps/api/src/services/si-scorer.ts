@@ -188,19 +188,23 @@ async function scoreWithAI(content: string): Promise<SIResult> {
     max_tokens: 512,
     messages: [{
       role: 'user',
-      content: `Score this signal on four SI dimensions (0.0–1.0 each). Respond with JSON only.
+      content: `You are scoring an investigation signal for Structural Incongruence (SI). Score each dimension 0.0–1.0. Respond with JSON only — no explanation.
 
 Signal: "${content}"
 
-Dimensions:
-- rate: rate of change inconsistent with classified state dynamics
-- direction: monotonic movement where bidirectional expected
-- relationship: decoupled from indicators it should track
-- configuration: multiple dimensions simultaneously approaching boundaries
+DIMENSIONS — score how strongly the signal shows each pattern, regardless of domain (space, crime, finance, medicine, etc.):
+
+rate (0.0–1.0): Something is at a level, speed, or magnitude that does not match what would be expected. Examples: a reading is wrong, a person was somewhere unexpected, a value deviates from normal, something is absent when it should be present, an amount is unusually large or small.
+
+direction (0.0–1.0): Something has been consistently moving in one direction over multiple periods, or a pattern keeps repeating. Examples: repeated calls to the same number, accumulating residuals, transfers arriving multiple times, a problem growing over time.
+
+relationship (0.0–1.0): Two sources or records that should agree are contradicting each other. Examples: what someone said vs what records show, a person's stated location vs their phone location, a self-report vs an objective log, a verbal alibi vs physical evidence.
+
+configuration (0.0–1.0): Multiple independent things are pointing to the same anomaly at the same time. Examples: phone records AND financial records both anomalous in the same window, two witnesses independently reporting the same strange car, several signals converging on the same person or location.
 
 Also extract:
-- mismatch_type: RATE | DIRECTION | RELATIONSHIP | CONFIGURATION (highest-scoring)
-- deviation_direction: UP | DOWN | DIVERGING | CONVERGING | STABLE
+- mismatch_type: RATE | DIRECTION | RELATIONSHIP | CONFIGURATION (the highest-scoring dimension)
+- deviation_direction: UP | DOWN | DIVERGING | CONVERGING | STABLE (overall direction of the anomaly, or null)
 
 {"rate":0.0,"direction":0.0,"relationship":0.0,"configuration":0.0,"mismatch_type":null,"deviation_direction":null}`
     }]
