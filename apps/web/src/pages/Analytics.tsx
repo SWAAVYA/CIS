@@ -20,7 +20,7 @@ export function Analytics() {
   const isAllZero = data && data.total_cases === 0
 
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
           <p className="font-serif italic text-sm mb-1" style={{ color: 'var(--text-muted)' }}>cognitive intelligence system</p>

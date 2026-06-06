@@ -69,7 +69,7 @@ export function CognitiveBriefing() {
   }
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h2 className="font-serif text-xl" style={{ color: 'var(--accent)' }}>Cognitive Briefing</h2>
         <div className="flex gap-2 flex-wrap">
