@@ -13,6 +13,7 @@ import hypothesesRouter from './routes/hypotheses.js';
 import briefingsRouter from './routes/briefings.js';
 import analyticsRouter from './routes/analytics.js';
 import intakeRouter from './routes/intake.js';
+import auditRouter from './routes/audit.js';
 import { startJobs } from './jobs/index.js';
 
 const required = ['DATABASE_URL'];
@@ -74,6 +75,7 @@ app.use('/api/cases', briefingsRouter);
 app.use('/api/briefings', briefingsRouter);
 app.use('/api/cases/:id/intake', intakeRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/audit', auditRouter);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);

@@ -21,6 +21,7 @@ model cases {
   signals                   signals[]
   signal_events             signal_events[]
   admission_audit           admission_audit[]
+  admission_audit_sealed    admission_audit_sealed[]
   score_change_audit        score_change_audit[]
   signal_connections        signal_connections[]
   contradictions            contradictions[]
@@ -124,6 +125,7 @@ model signals {
   recurrences             signals[]            @relation("recurrence")
   signal_events           signal_events[]
   admission_audit         admission_audit[]
+  admission_audit_sealed  admission_audit_sealed[]
   score_change_audit      score_change_audit[]
   connections_as_a        signal_connections[] @relation("signal_a")
   connections_as_b        signal_connections[] @relation("signal_b")
@@ -176,6 +178,48 @@ model admission_audit {
 
   @@index([case_id])
   @@index([case_id, decision])
+}
+
+model admission_audit_sealed {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq                Int      @default(autoincrement())
+  signal_id          String   @db.Uuid
+  case_id            String   @db.Uuid
+  decision           String
+  si_score           Decimal  @db.Decimal(5, 4)
+  si_threshold       Decimal  @db.Decimal(5, 4)
+  significance       Decimal  @db.Decimal(5, 4)
+  sig_threshold      Decimal  @db.Decimal(5, 4)
+  dim_threshold      Decimal  @db.Decimal(5, 4)
+  constraint_version String
+  signal_content     String
+  si_rate            Decimal  @db.Decimal(5, 4)
+  si_direction       Decimal  @db.Decimal(5, 4)
+  si_relationship    Decimal  @db.Decimal(5, 4)
+  si_configuration   Decimal  @db.Decimal(5, 4)
+  input_hash         String   @db.Char(64)
+  decision_trace     Json
+  prev_hash          String   @db.Char(64)
+  current_hash       String   @unique @db.Char(64)
+  sealed_at          DateTime @default(now()) @db.Timestamptz
+
+  signal signals @relation(fields: [signal_id], references: [id])
+  case   cases   @relation(fields: [case_id], references: [id])
+
+  @@index([case_id])
+  @@index([signal_id])
+  @@index([seq])
+}
+
+model admission_audit_checkpoint {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seq_from     Int
+  seq_to       Int
+  record_count Int
+  merkle_root  String   @db.Char(64)
+  created_at   DateTime @default(now()) @db.Timestamptz
+
+  @@index([created_at(sort: Desc)])
 }
 
 model score_change_audit {

@@ -1,12 +1,9 @@
 import { Router, Request } from 'express';
-import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { scoreSignal } from '../services/si-scorer.js';
 import { checkConnections, generateHypothesis } from '../services/shg.js';
-
-const SI_MIN_THRESHOLD = parseFloat(process.env.SI_MIN_THRESHOLD ?? '0.25');
-const SIG_THRESHOLD = parseFloat(process.env.SIG_THRESHOLD ?? '0.55');
+import { runAdmission } from '../services/admission.js';
 
 type WithCaseId = Request<{ id: string }>
 
@@ -188,62 +185,6 @@ async function callAI(systemPrompt: string, userMessage: string): Promise<string
   return response.content[0].type === 'text' ? response.content[0].text : '';
 }
 
-async function runAdmission(
-  tx: Prisma.TransactionClient,
-  signalId: string,
-  caseId: string,
-  siScore: number,
-  significance: number,
-  siMaxDimension = 0
-): Promise<{ decision: string; reason: string }> {
-  // A signal passes if its weighted SI score clears SI_min OR if any single
-  // dimension scores >= 0.35 (structural anomaly visible in at least one dimension).
-  // This prevents low-weighted dimensions (rate = 0.20) from blocking clearly
-  // anomalous signals that only manifest in one structural category.
-  const SI_DIM_THRESHOLD = 0.35;
-  const passesWeighted = siScore >= SI_MIN_THRESHOLD;
-  const passesDimension = siMaxDimension >= SI_DIM_THRESHOLD;
-  if (!passesWeighted && !passesDimension) {
-    const reason = `SI score ${siScore} below SI_min ${SI_MIN_THRESHOLD} and max dimension ${siMaxDimension} below ${SI_DIM_THRESHOLD}`;
-    await tx.signals.update({
-      where: { id: signalId },
-      data: { lifecycle_status: 'EXPIRED', rejection_reason: reason, rejection_lp: 'LP-1' },
-    });
-    await tx.admission_audit.create({
-      data: { signal_id: signalId, case_id: caseId, decision: 'REJECTED', si_score: siScore, significance, si_threshold: SI_MIN_THRESHOLD, sig_threshold: SIG_THRESHOLD, rejection_reason: reason },
-    });
-    await tx.signal_events.create({
-      data: { signal_id: signalId, case_id: caseId, from_status: 'CANDIDATE', to_status: 'EXPIRED', reason, lp_flag: 'LP-1' },
-    });
-    return { decision: 'REJECTED', reason };
-  }
-
-  const meetsSignificance = significance >= SIG_THRESHOLD;
-  const decision = meetsSignificance ? 'ADMITTED' : 'SUB_THRESHOLD_RETAINED';
-  const reason = meetsSignificance
-    ? `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} above threshold ${SIG_THRESHOLD}.`
-    : `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} below threshold ${SIG_THRESHOLD} — admitted per WSP sub-threshold preservation.`;
-
-  await tx.signals.update({
-    where: { id: signalId },
-    data: { lifecycle_status: 'ADMITTED', is_wsp_protected: true, admitted_at: new Date(), admission_reason: reason },
-  });
-  await tx.admission_audit.create({
-    data: { signal_id: signalId, case_id: caseId, decision, si_score: siScore, significance, si_threshold: SI_MIN_THRESHOLD, sig_threshold: SIG_THRESHOLD },
-  });
-  await tx.signal_events.create({
-    data: { signal_id: signalId, case_id: caseId, from_status: 'CANDIDATE', to_status: 'ADMITTED', reason },
-  });
-
-  if (meetsSignificance) {
-    await tx.signals.update({ where: { id: signalId }, data: { lifecycle_status: 'RETAINED' } });
-    await tx.signal_events.create({
-      data: { signal_id: signalId, case_id: caseId, from_status: 'ADMITTED', to_status: 'RETAINED', reason: `Significance ${significance} meets threshold ${SIG_THRESHOLD}` },
-    });
-  }
-
-  return { decision, reason };
-}
 
 // POST /document
 router.post('/document', async (req: WithCaseId, res, next) => {
@@ -392,7 +333,15 @@ router.post('/confirm', async (req: WithCaseId, res, next) => {
         });
 
         const siMaxDim = Math.max(siResult.si_rate, siResult.si_direction, siResult.si_relationship, siResult.si_configuration);
-        const admission = await runAdmission(tx, signal.id, caseId, siResult.si_score, significance, siMaxDim);
+        const admission = await runAdmission({
+          tx, signalId: signal.id, caseId,
+          signalContent: candidate.text,
+          siScore: siResult.si_score,
+          siRate: siResult.si_rate, siDirection: siResult.si_direction,
+          siRelationship: siResult.si_relationship, siConfiguration: siResult.si_configuration,
+          siMaxDimension: siMaxDim,
+          significance,
+        });
         const updated = await tx.signals.findUniqueOrThrow({ where: { id: signal.id } });
         return { signal: updated, admission };
       });

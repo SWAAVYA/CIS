@@ -1,10 +1,11 @@
 ﻿import { Router } from 'express';
-import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { scoreSignal } from '../services/si-scorer.js';
 import { transitionSignal, updateSignalScores } from '../services/sls.js';
 import { checkConnections, generateHypothesis } from '../services/shg.js';
+import { runAdmission } from '../services/admission.js';
+import { ACTIVE_CONSTRAINTS } from '../services/constraint-registry.js';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,63 +23,8 @@ const scoreSchema = z.object({
   significance: z.number().min(0).max(1).optional(),
 });
 
-const SI_MIN_THRESHOLD = parseFloat(process.env.SI_MIN_THRESHOLD ?? '0.25');
-const SIG_THRESHOLD = parseFloat(process.env.SIG_THRESHOLD ?? '0.55');
 const router = Router();
 
-// Inline admission logic using whichever Prisma client is passed (supports tx)
-async function runAdmission(
-  tx: Prisma.TransactionClient,
-  signalId: string,
-  caseId: string,
-  siScore: number,
-  significance: number,
-  siMaxDimension = 0
-): Promise<{ decision: string; reason: string }> {
-  const SI_DIM_THRESHOLD = 0.35;
-  const passesWeighted = siScore >= SI_MIN_THRESHOLD;
-  const passesDimension = siMaxDimension >= SI_DIM_THRESHOLD;
-  if (!passesWeighted && !passesDimension) {
-    const reason = `SI score ${siScore} below SI_min ${SI_MIN_THRESHOLD} and max dimension ${siMaxDimension} below ${SI_DIM_THRESHOLD}`;
-    await tx.signals.update({
-      where: { id: signalId },
-      data: { lifecycle_status: 'EXPIRED', rejection_reason: reason, rejection_lp: 'LP-1' },
-    });
-    await tx.admission_audit.create({
-      data: { signal_id: signalId, case_id: caseId, decision: 'REJECTED', si_score: siScore, significance, si_threshold: SI_MIN_THRESHOLD, sig_threshold: SIG_THRESHOLD, rejection_reason: reason },
-    });
-    await tx.signal_events.create({
-      data: { signal_id: signalId, case_id: caseId, from_status: 'CANDIDATE', to_status: 'EXPIRED', reason, lp_flag: 'LP-1' },
-    });
-    return { decision: 'REJECTED', reason };
-  }
-
-  const meetsSignificance = significance >= SIG_THRESHOLD;
-  const decision = meetsSignificance ? 'ADMITTED' : 'SUB_THRESHOLD_RETAINED';
-  const reason = meetsSignificance
-    ? `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} above threshold ${SIG_THRESHOLD}.`
-    : `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. Significance ${significance} below threshold ${SIG_THRESHOLD} â€” admitted per WSP sub-threshold preservation.`;
-
-  await tx.signals.update({
-    where: { id: signalId },
-    data: { lifecycle_status: 'ADMITTED', is_wsp_protected: true, admitted_at: new Date(), admission_reason: reason },
-  });
-  await tx.admission_audit.create({
-    data: { signal_id: signalId, case_id: caseId, decision, si_score: siScore, significance, si_threshold: SI_MIN_THRESHOLD, sig_threshold: SIG_THRESHOLD },
-  });
-  await tx.signal_events.create({
-    data: { signal_id: signalId, case_id: caseId, from_status: 'CANDIDATE', to_status: 'ADMITTED', reason },
-  });
-
-  if (meetsSignificance) {
-    await tx.signals.update({ where: { id: signalId }, data: { lifecycle_status: 'RETAINED' } });
-    await tx.signal_events.create({
-      data: { signal_id: signalId, case_id: caseId, from_status: 'ADMITTED', to_status: 'RETAINED', reason: `Significance ${significance} meets threshold ${SIG_THRESHOLD}` },
-    });
-  }
-
-  return { decision, reason };
-}
 
 // POST /api/cases/:id/signals
 router.post('/:id/signals', async (req, res, next) => {
@@ -129,7 +75,15 @@ router.post('/:id/signals', async (req, res, next) => {
       });
 
       const siMaxDim = Math.max(siResult.si_rate, siResult.si_direction, siResult.si_relationship, siResult.si_configuration);
-      const admission = await runAdmission(tx, signal.id, req.params.id, siResult.si_score, significance, siMaxDim);
+      const admission = await runAdmission({
+        tx, signalId: signal.id, caseId: req.params.id,
+        signalContent: content,
+        siScore: siResult.si_score,
+        siRate: siResult.si_rate, siDirection: siResult.si_direction,
+        siRelationship: siResult.si_relationship, siConfiguration: siResult.si_configuration,
+        siMaxDimension: siMaxDim,
+        significance,
+      });
       const updated = await tx.signals.findUniqueOrThrow({ where: { id: signal.id } });
       return { signal: updated, admission };
     });
@@ -162,7 +116,13 @@ router.post('/:id/signals', async (req, res, next) => {
 
     res.status(201).json({
       signal,
-      admission: { decision: admission.decision, si_threshold: SI_MIN_THRESHOLD, sig_threshold: SIG_THRESHOLD },
+      admission: {
+        decision: admission.decision,
+        si_threshold: ACTIVE_CONSTRAINTS.SI_MIN_THRESHOLD,
+        sig_threshold: ACTIVE_CONSTRAINTS.SIG_THRESHOLD,
+        constraint_version: ACTIVE_CONSTRAINTS.version,
+        seal: { current_hash: admission.seal.currentHash, prev_hash: admission.seal.prevHash },
+      },
       connections,
       hypotheses,
       lp_flags: lpFlags.map(e => e.lp_flag),
