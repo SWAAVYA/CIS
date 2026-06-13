@@ -147,19 +147,16 @@ export interface ReproductionDynamics {
   type_id: string;
   code: string;
   propagation_edge_count: number;
-  // Same-type edges only (reproduction proper)
-  reproduction_edge_count: number;
-  // Cross-type edges (propagation-derived innovation)
-  innovation_edge_count: number;
+  reproduction_edge_count: number;       // A→A same-type edges
+  innovation_edge_count: number;         // A→B cross-type edges
+  innovation_rate: number | null;        // innovation_edge_count / propagation_edge_count
   mean_reproduction_interval_days: number | null;
   median_reproduction_interval_days: number | null;
-  // challenge_lag: mean days from instance birth to first intervention
   mean_challenge_lag_days: number | null;
-  // reproduction_advantage = reproduction_interval / challenge_lag
-  // > 1: reproduces faster than challenged (population growing under intervention pressure)
-  // < 1: challenged faster than it reproduces (population contracting)
-  // null: insufficient data
+  // > 1: reproduces faster than challenged; < 1: challenged faster than it reproduces
   reproduction_advantage: number | null;
+  // Note: intervals computed using COALESCE(first_observed_at, created_at) as birth anchor.
+  // first_observed_at should be set on historical instances to reflect real-world birth date.
 }
 
 export async function getReproductionDynamics(typeId: string): Promise<ReproductionDynamics> {
@@ -170,15 +167,15 @@ export async function getReproductionDynamics(typeId: string): Promise<Reproduct
     source_type_id: string;
     target_type_id: string;
     occurred_at: Date | null;
-    source_created_at: Date;
-    target_created_at: Date;
+    source_birth: Date;   // COALESCE(first_observed_at, created_at)
+    target_birth: Date;
   }>>`
     SELECT
       src_rt.id   AS source_type_id,
       tgt_rt.id   AS target_type_id,
       rpe.occurred_at,
-      src_ri.created_at AS source_created_at,
-      tgt_ri.created_at AS target_created_at
+      COALESCE(src_ri.first_observed_at, src_ri.created_at) AS source_birth,
+      COALESCE(tgt_ri.first_observed_at, tgt_ri.created_at) AS target_birth
     FROM residual_propagation_event rpe
     JOIN residual_instance src_ri ON src_ri.id = rpe.source_instance_id
     JOIN residual_instance tgt_ri ON tgt_ri.id = rpe.target_instance_id
@@ -191,10 +188,12 @@ export async function getReproductionDynamics(typeId: string): Promise<Reproduct
   const reproEdges = edges.filter(e => e.source_type_id === e.target_type_id);
   const innovEdges = edges.filter(e => e.source_type_id !== e.target_type_id);
 
-  // Reproduction interval: days between source birth and target birth (or occurrence date)
+  // Reproduction interval: days between source birth and target birth.
+  // Uses COALESCE(first_observed_at, created_at) already applied in SQL (source_birth/target_birth).
+  // Falls back to occurred_at if it's later than target_birth (captures when edge was observable).
   const intervals = reproEdges.map(e => {
-    const ref = e.occurred_at ?? e.target_created_at;
-    return (ref.getTime() - e.source_created_at.getTime()) / 86_400_000;
+    const ref = e.occurred_at && e.occurred_at > e.target_birth ? e.occurred_at : e.target_birth;
+    return (ref.getTime() - e.source_birth.getTime()) / 86_400_000;
   }).filter(d => d > 0);
 
   const meanInterval = intervals.length > 0
@@ -208,9 +207,12 @@ export async function getReproductionDynamics(typeId: string): Promise<Reproduct
       : sorted[Math.floor(sorted.length / 2)]
     : null;
 
-  // Challenge lag: days from instance birth to first intervention attempt for instances of this type
+  // Challenge lag: days from instance birth to first intervention attempt.
+  // Uses COALESCE(first_observed_at, created_at) as birth anchor.
   const lagRows = await prisma.$queryRaw<Array<{ lag_days: number }>>`
-    SELECT EXTRACT(EPOCH FROM (ri2.attempted_at - ri.created_at)) / 86400 AS lag_days
+    SELECT EXTRACT(EPOCH FROM (
+      ri2.attempted_at - COALESCE(ri.first_observed_at, ri.created_at)
+    )) / 86400 AS lag_days
     FROM residual_instance ri
     JOIN residual_intervention ri2 ON ri2.residual_instance_id = ri.id
     WHERE ri.residual_type_id = ${typeId}::uuid
@@ -225,12 +227,15 @@ export async function getReproductionDynamics(typeId: string): Promise<Reproduct
     ? meanInterval / meanChallengeLag
     : null;
 
+  const innovationRate = edges.length > 0 ? innovEdges.length / edges.length : null;
+
   return {
     type_id: typeId,
     code: type.code,
     propagation_edge_count: edges.length,
     reproduction_edge_count: reproEdges.length,
     innovation_edge_count: innovEdges.length,
+    innovation_rate: innovationRate,
     mean_reproduction_interval_days: meanInterval,
     median_reproduction_interval_days: medianInterval,
     mean_challenge_lag_days: meanChallengeLag,

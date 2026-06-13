@@ -73,11 +73,23 @@ router.patch('/residual-types/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.patch('/residuals/:id/birth', async (req, res, next) => {
+  try {
+    const { first_observed_at } = req.body;
+    if (!first_observed_at) return res.status(400).json({ error: 'first_observed_at required', status: 400 });
+    const updated = await prisma.residual_instance.update({
+      where: { id: req.params.id },
+      data: { first_observed_at: new Date(first_observed_at) },
+    });
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
 // ── Case Residuals ───────────────────────────────────────────────────────────
 
 router.post('/cases/:id/residuals', async (req, res, next) => {
   try {
-    const { residual_type_id, signal_id, description, weight } = req.body;
+    const { residual_type_id, signal_id, description, weight, first_observed_at } = req.body;
     if (!residual_type_id) return res.status(400).json({ error: 'residual_type_id required', code: 'MISSING_FIELD', status: 400 });
     const instance = await openResidualInstance({
       case_id: req.params.id,
@@ -85,6 +97,7 @@ router.post('/cases/:id/residuals', async (req, res, next) => {
       signal_id,
       description,
       weight,
+      first_observed_at: first_observed_at ? new Date(first_observed_at) : undefined,
     });
     res.status(201).json(instance);
   } catch (err) { next(err); }

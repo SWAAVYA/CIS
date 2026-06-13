@@ -57,6 +57,7 @@ export async function openResidualInstance(data: {
   signal_id?: string;
   description?: string;
   weight?: number;
+  first_observed_at?: Date;
 }) {
   return prisma.$transaction(async (tx) => {
     const instance = await tx.residual_instance.create({
