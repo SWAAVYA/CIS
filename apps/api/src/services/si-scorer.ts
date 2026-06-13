@@ -33,8 +33,10 @@ export async function scoreSignal(content: string): Promise<SIResult> {
 // ─── AI scorer ────────────────────────────────────────────────────────────
 
 async function scoreWithAI(content: string): Promise<SIResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey });
 
   const response = await client.messages.create({
     model: process.env.AI_MODEL ?? 'claude-haiku-4-5-20251001',
