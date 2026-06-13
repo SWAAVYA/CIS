@@ -51,7 +51,7 @@ router.post('/:id/signals', async (req, res, next) => {
     const sig_relevance   = 0; // no evidence yet
     const significance    = round3((sig_si + sig_persistence + sig_corroboration + sig_proximity + sig_rarity + sig_relevance) / 6);
 
-    const { signal, admission } = await prisma.$transaction(async (tx) => {
+    const { signal: updatedSignal, admission } = await prisma.$transaction(async (tx) => {
       const signal = await tx.signals.create({
         data: {
           case_id: req.params.id,
@@ -92,21 +92,21 @@ router.post('/:id/signals', async (req, res, next) => {
     // SHG runs AFTER transaction commits
     const connections: unknown[] = [];
     const hypotheses: unknown[] = [];
-    if (signal.lifecycle_status !== 'EXPIRED') {
-      detectContradictions(signal.id, req.params.id).catch(err =>
+    if (updatedSignal.lifecycle_status !== 'EXPIRED') {
+      detectContradictions(updatedSignal.id, req.params.id).catch(err =>
         console.warn('[contradiction-detector] error:', err instanceof Error ? err.message : err)
       );
-      await checkConnections(signal.id);
+      await checkConnections(updatedSignal.id);
       // Trigger hypothesis generation for any new unprocessed connections
       const pendingConns = await prisma.signal_connections.findMany({
         where: {
-          OR: [{ signal_a_id: signal.id }, { signal_b_id: signal.id }],
+          OR: [{ signal_a_id: updatedSignal.id }, { signal_b_id: updatedSignal.id }],
           shg_triggered: false,
         },
       });
       await Promise.allSettled(pendingConns.map(c => generateHypothesis(c.id)));
       const newConns = await prisma.signal_connections.findMany({
-        where: { OR: [{ signal_a_id: signal.id }, { signal_b_id: signal.id }] },
+        where: { OR: [{ signal_a_id: updatedSignal.id }, { signal_b_id: updatedSignal.id }] },
         include: { hypothesis: true },
       });
       connections.push(...newConns);
@@ -114,12 +114,12 @@ router.post('/:id/signals', async (req, res, next) => {
     }
 
     const lpFlags = await prisma.signal_events.findMany({
-      where: { signal_id: signal.id, lp_flag: { not: null } },
+      where: { signal_id: updatedSignal.id, lp_flag: { not: null } },
       select: { lp_flag: true },
     });
 
     res.status(201).json({
-      signal,
+      signal: updatedSignal,
       admission: {
         decision: admission.decision,
         si_threshold: ACTIVE_CONSTRAINTS.SI_MIN_THRESHOLD,
