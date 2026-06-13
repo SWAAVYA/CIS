@@ -153,7 +153,9 @@ export interface ReproductionDynamics {
   mean_reproduction_interval_days: number | null;
   median_reproduction_interval_days: number | null;
   mean_challenge_lag_days: number | null;
-  // > 1: reproduces faster than challenged; < 1: challenged faster than it reproduces
+  // > 1: population reproduces faster than it is challenged (population advantage)
+  // < 1: challenges arrive faster than reproduction (intervention advantage)
+  // Formula: challenge_lag / reproduction_interval (not interval/lag)
   reproduction_advantage: number | null;
   // Note: intervals computed using COALESCE(first_observed_at, created_at) as birth anchor.
   // first_observed_at should be set on historical instances to reflect real-world birth date.
@@ -223,8 +225,9 @@ export async function getReproductionDynamics(typeId: string): Promise<Reproduct
     ? lagRows.reduce((sum, r) => sum + Number(r.lag_days), 0) / lagRows.length
     : null;
 
-  const reproductionAdvantage = (meanInterval !== null && meanChallengeLag !== null && meanChallengeLag > 0)
-    ? meanInterval / meanChallengeLag
+  // challenge_lag / reproduction_interval: >1 means population reproduces faster than challenged
+  const reproductionAdvantage = (meanInterval !== null && meanChallengeLag !== null && meanInterval > 0)
+    ? meanChallengeLag / meanInterval
     : null;
 
   const innovationRate = edges.length > 0 ? innovEdges.length / edges.length : null;
