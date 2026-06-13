@@ -497,8 +497,10 @@ model residual_instance {
   residual_type residual_type  @relation(fields: [residual_type_id], references: [id])
   signal        signals?       @relation(fields: [signal_id], references: [id])
   lineages              residual_lineage[]
-  interventions         residual_intervention[]
-  recommendation_events recommendation_event[]
+  interventions              residual_intervention[]
+  recommendation_events      recommendation_event[]
+  propagation_events_sourced residual_propagation_event[] @relation("propagation_source")
+  propagation_events_targeted residual_propagation_event[] @relation("propagation_target")
 
   @@index([case_id])
   @@index([residual_type_id])
@@ -586,14 +588,15 @@ model recommendation_event {
 }
 
 model residual_intervention {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lineage_id           String    @db.Uuid
-  residual_instance_id String    @db.Uuid
-  case_id              String    @db.Uuid
-  intervention_type    String
-  intervention_note    String?
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lineage_id             String    @db.Uuid
+  residual_instance_id   String    @db.Uuid
+  case_id                String    @db.Uuid
+  intervention_type      String
+  intervention_note      String?
   outcome_terminal_state String?
-  attempted_at         DateTime  @default(now()) @db.Timestamptz
+  ecology_class          String?
+  attempted_at           DateTime  @default(now()) @db.Timestamptz
 
   lineage           residual_lineage   @relation(fields: [lineage_id], references: [id], onDelete: Cascade)
   residual_instance residual_instance  @relation(fields: [residual_instance_id], references: [id])
@@ -601,6 +604,27 @@ model residual_intervention {
 
   @@index([lineage_id])
   @@index([case_id])
+}
+
+model residual_propagation_event {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_instance_id     String    @db.Uuid
+  target_instance_id     String    @db.Uuid
+  propagation_channel    String
+  attribution_confidence Decimal   @db.Decimal(3, 2)
+  attribution_category   String
+  occurred_at            DateTime? @db.Timestamptz
+  detected_at            DateTime  @default(now()) @db.Timestamptz
+  recorded_by            String?
+  notes                  String?
+  created_at             DateTime  @default(now()) @db.Timestamptz
+
+  source_instance residual_instance @relation("propagation_source", fields: [source_instance_id], references: [id])
+  target_instance residual_instance @relation("propagation_target", fields: [target_instance_id], references: [id])
+
+  @@index([source_instance_id])
+  @@index([target_instance_id])
+  @@map("residual_propagation_event")
 }
 
 // ── CIS v2 Frame Graph ────────────────────────────────────────────────────
