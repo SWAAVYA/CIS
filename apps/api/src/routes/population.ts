@@ -34,7 +34,7 @@ router.post('/propagation-events', async (req, res, next) => {
     const {
       source_instance_id, target_instance_id,
       propagation_channel, attribution_confidence, attribution_category,
-      occurred_at, recorded_by, notes,
+      evidence_basis, occurred_at, recorded_by, notes,
     } = req.body;
 
     if (!source_instance_id || !target_instance_id)
@@ -52,6 +52,7 @@ router.post('/propagation-events', async (req, res, next) => {
       propagation_channel,
       attribution_confidence: Number(attribution_confidence),
       attribution_category,
+      evidence_basis: Array.isArray(evidence_basis) ? evidence_basis : undefined,
       occurred_at: occurred_at ? new Date(occurred_at) : undefined,
       recorded_by,
       notes,

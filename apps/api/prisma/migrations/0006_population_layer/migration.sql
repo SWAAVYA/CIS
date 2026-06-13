@@ -20,6 +20,11 @@ CREATE TABLE IF NOT EXISTS residual_propagation_event (
     CHECK (attribution_confidence BETWEEN 0 AND 1),
   attribution_category    TEXT NOT NULL
     CHECK (attribution_category IN ('direct', 'indirect', 'independent')),
+  -- evidence_basis: the observable facts grounding this edge (separate from confidence).
+  -- Stored as array so queries can filter/aggregate by evidence pattern.
+  -- Values: same_author | shared_framework | temporal_ordering | explicit_reference
+  --         explicit_citation | shared_channel | structural_similarity | derivative_work
+  evidence_basis          TEXT[] NOT NULL DEFAULT '{}',
   occurred_at             TIMESTAMPTZ,
   detected_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   recorded_by             TEXT,

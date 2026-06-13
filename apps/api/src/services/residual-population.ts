@@ -16,6 +16,11 @@ export type PropagationChannel =
 
 export type AttributionCategory = 'direct' | 'indirect' | 'independent';
 
+export type EvidenceBasis =
+  | 'same_author' | 'shared_framework' | 'temporal_ordering'
+  | 'explicit_reference' | 'explicit_citation' | 'shared_channel'
+  | 'structural_similarity' | 'derivative_work';
+
 export type EcologyClass = 'compelled' | 'incentivized' | 'voluntary' | 'none';
 
 // ── Propagation Events ───────────────────────────────────────────────────────
@@ -26,6 +31,7 @@ export async function recordPropagationEvent(data: {
   propagation_channel: PropagationChannel;
   attribution_confidence: number;
   attribution_category: AttributionCategory;
+  evidence_basis?: EvidenceBasis[];
   occurred_at?: Date;
   recorded_by?: string;
   notes?: string;
@@ -36,7 +42,9 @@ export async function recordPropagationEvent(data: {
   if (data.attribution_confidence < 0 || data.attribution_confidence > 1) {
     throw new Error('attribution_confidence must be in [0, 1]');
   }
-  return prisma.residual_propagation_event.create({ data });
+  return prisma.residual_propagation_event.create({
+    data: { ...data, evidence_basis: data.evidence_basis ?? [] },
+  });
 }
 
 export async function listPropagationEvents(opts: {
