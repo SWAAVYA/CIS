@@ -1,5 +1,3 @@
-import prisma from '../prisma.js';
-
 // Weights per spec: rate 0.20, direction 0.20, relationship 0.25, configuration 0.35
 const WEIGHTS = { rate: 0.20, direction: 0.20, relationship: 0.25, configuration: 0.35 };
 
@@ -208,25 +206,6 @@ function inferDeviationDirection(lower: string): string | null {
     if (keywords.some(k => lower.includes(k))) return dir;
   }
   return null;
-}
-
-// ─── Persist scores ───────────────────────────────────────────────────────
-
-export async function applyScoresToSignal(signalId: string, result: SIResult): Promise<void> {
-  await prisma.signals.update({
-    where: { id: signalId },
-    data: {
-      si_rate:             result.si_rate,
-      si_direction:        result.si_direction,
-      si_relationship:     result.si_relationship,
-      si_configuration:    result.si_configuration,
-      si_score:            result.si_score,
-      mismatch_type:       result.mismatch_type,
-      deviation_direction: result.deviation_direction,
-      shg_mode:            result.shg_mode,
-      ai_reasoning:        result.ai_reasoning ?? null,
-    },
-  });
 }
 
 function clamp(v: number): number { return Math.min(1.0, Math.max(0.0, v)); }

@@ -96,9 +96,13 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
       dimThreshold: SI_DIM_THRESHOLD,
     });
 
+    try {
     await writeClassifiesEdge(tx, caseId, seal.sealedRecordId, {
       siScore, siRate, siDirection, siRelationship, siConfiguration, decision: 'REJECTED',
     });
+  } catch (fgErr) {
+    console.warn('[admission] frame-graph write skipped (tables may not exist):', fgErr instanceof Error ? fgErr.message : fgErr);
+  }
     return { decision: 'REJECTED', reason, seal };
   }
 
@@ -157,9 +161,13 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
     dimThreshold: SI_DIM_THRESHOLD,
   });
 
-  await writeClassifiesEdge(tx, caseId, seal.sealedRecordId, {
-    siScore, siRate, siDirection, siRelationship, siConfiguration, decision,
-  });
+  try {
+    await writeClassifiesEdge(tx, caseId, seal.sealedRecordId, {
+      siScore, siRate, siDirection, siRelationship, siConfiguration, decision,
+    });
+  } catch (fgErr) {
+    console.warn('[admission] frame-graph write skipped (tables may not exist):', fgErr instanceof Error ? fgErr.message : fgErr);
+  }
   return { decision, reason, seal };
 }
 

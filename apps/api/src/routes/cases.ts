@@ -20,11 +20,12 @@ router.get('/:id', async (req, res, next) => {
   try {
     const c = await prisma.cases.findUniqueOrThrow({ where: { id: req.params.id } });
 
-    const [byStatus, quarantined, connected, wsp] = await Promise.all([
+    const [byStatus, quarantined, connected, wsp, openContradictions] = await Promise.all([
       prisma.signals.groupBy({ by: ['lifecycle_status'], where: { case_id: c.id }, _count: true }),
       prisma.signals.count({ where: { case_id: c.id, is_quarantined: true } }),
       prisma.signals.count({ where: { case_id: c.id, is_connected: true } }),
       prisma.signals.count({ where: { case_id: c.id, is_wsp_protected: true } }),
+      prisma.contradictions.count({ where: { case_id: c.id, status: 'ACTIVE' } }),
     ]);
 
     const byStatusMap: Record<string, number> = {};
@@ -37,6 +38,7 @@ router.get('/:id', async (req, res, next) => {
         quarantined,
         connected,
         wsp_protected: wsp,
+        open_contradictions: openContradictions,
       },
     });
   } catch (err) { next(err); }

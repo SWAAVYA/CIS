@@ -41,11 +41,12 @@ router.post('/:id/signals', async (req, res, next) => {
     if (mismatch_type)      siResult.mismatch_type = mismatch_type;
     if (deviation_direction) siResult.deviation_direction = deviation_direction;
 
-    // Compute significance from available data (new signal: persistence=0, corroboration=0, relevance=0)
+    // Compute significance from available data (new signal: corroboration=0, relevance=0)
     // sig_proximity = si_configuration, sig_rarity = si_score, sig_si = si_score
+    // sig_persistence uses observation_period if provided (10 periods = max score)
     const sig_si          = round3(siResult.si_score);
-    const sig_persistence = 0; // no events yet
-    const sig_corroboration = 0; // needs DB scan â€” computed post-transaction
+    const sig_persistence = observation_period ? round3(Math.min(observation_period / 10, 1.0)) : 0;
+    const sig_corroboration = 0; // needs DB scan — computed post-transaction
     const sig_proximity   = round3(Number(siResult.si_configuration));
     const sig_rarity      = round3(siResult.si_score);
     const sig_relevance   = 0; // no evidence yet

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../prisma.js';
+import { refreshAnalytics } from '../jobs/index.js';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get('/', async (_req, res, next) => {
     const stale = !latest || (Date.now() - latest.snapshot_at.getTime()) > 60 * 60 * 1000;
 
     if (stale) {
-      await prisma.$executeRaw`SELECT refresh_analytics()`;
+      await refreshAnalytics();
     }
 
     const snapshot = await prisma.analytics_snapshots.findFirst({ orderBy: { snapshot_at: 'desc' } });

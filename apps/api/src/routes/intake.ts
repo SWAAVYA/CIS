@@ -302,7 +302,7 @@ router.post('/confirm', async (req: WithCaseId, res, next) => {
       if (candidate.deviation_direction) siResult.deviation_direction = candidate.deviation_direction;
 
       const sig_si = round3(siResult.si_score);
-      const sig_persistence = 0;
+      const sig_persistence = candidate.observation_period ? round3(Math.min(candidate.observation_period / 10, 1.0)) : 0;
       const sig_corroboration = 0;
       const sig_proximity = round3(Number(siResult.si_configuration));
       const sig_rarity = round3(siResult.si_score);

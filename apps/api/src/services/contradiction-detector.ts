@@ -86,18 +86,28 @@ async function checkContradiction(
     max_tokens: 400,
     messages: [{
       role: 'user',
-      content: `You are detecting structural contradictions between two observation signals in an investigation.
+      content: `You are detecting STRUCTURAL CONTRADICTIONS between two observation signals in an investigation.
 
-A contradiction exists when the two signals make claims that cannot both be true, or when one signal directly undermines the credibility or conclusion of the other.
+A structural contradiction exists ONLY when:
+1. Both signals describe THE SAME specific variable, metric, fact, or state, AND
+2. They assign values or conditions to it that CANNOT both be accurate at the same time.
+
+Do NOT flag as contradictions:
+- Signals describing different aspects, domains, or timeframes of the same situation
+- Signals where one provides context or elaboration for the other
+- Signals that are merely related or thematically similar
+- Signals describing sequential change (one could follow from the other)
+- Signals with different emphasis or framing but no factual conflict
+- Signals that are both plausibly true simultaneously
 
 Signal A: "${contentA}"
 
 Signal B: "${contentB}"
 
-Do these signals contradict each other? Respond with JSON only:
+Do these signals contain a direct factual contradiction where the same specific thing cannot be in both states simultaneously? Respond with JSON only:
 {
   "contradicts": true or false,
-  "description": "One sentence describing the specific contradiction, or empty string if none."
+  "description": "One precise sentence naming the specific variable that is contradicted and how, or empty string if no genuine contradiction."
 }`
     }]
   });

@@ -26,11 +26,76 @@ async function failJobRun(id: string, error: string) {
 async function runAnalyticsRefresh() {
   const job = await createJobRun('analytics-refresh');
   try {
-    await prisma.$executeRaw`SELECT refresh_analytics()`;
+    await refreshAnalytics();
     await completeJobRun(job.id, 1);
   } catch (err) {
     await failJobRun(job.id, String(err));
   }
+}
+
+export async function refreshAnalytics(): Promise<void> {
+  const [
+    totalCases,
+    totalDomains,
+    totalSignals,
+    admittedSignals,
+    totalHypotheses,
+    confirmedHypotheses,
+    totalContradictions,
+    resolvedContradictions,
+    totalBriefings,
+    lpCounts,
+    siAvg,
+    totalConnections,
+    triggeredConnections,
+  ] = await Promise.all([
+    prisma.cases.count(),
+    prisma.domains.count(),
+    prisma.signals.count(),
+    prisma.signals.count({ where: { lifecycle_status: { in: ['ADMITTED', 'RETAINED', 'ASSESSED', 'RESOLVED', 'ARCHIVED'] } } }),
+    prisma.hypotheses.count(),
+    prisma.hypotheses.count({ where: { status: 'CONFIRMED' } }),
+    prisma.contradictions.count(),
+    prisma.contradictions.count({ where: { status: 'RESOLVED' } }),
+    prisma.briefings.count(),
+    prisma.signal_events.groupBy({ by: ['lp_flag'], where: { lp_flag: { not: null } }, _count: true }),
+    prisma.signals.aggregate({ _avg: { si_score: true, significance: true } }),
+    prisma.signal_connections.count(),
+    prisma.signal_connections.count({ where: { shg_triggered: true } }),
+  ]);
+
+  const lpMap: Record<string, number> = {};
+  for (const row of lpCounts) if (row.lp_flag) lpMap[row.lp_flag] = row._count;
+
+  const admissionRate = totalSignals > 0 ? admittedSignals / totalSignals : null;
+  const hclRate = totalHypotheses > 0 ? confirmedHypotheses / totalHypotheses : null;
+  const shgRate = totalConnections > 0 ? triggeredConnections / totalConnections : null;
+
+  await prisma.analytics_snapshots.create({
+    data: {
+      total_cases: totalCases,
+      total_domains: totalDomains,
+      total_signals_submitted: totalSignals,
+      total_signals_admitted: admittedSignals,
+      total_hypotheses: totalHypotheses,
+      total_hypotheses_confirmed: confirmedHypotheses,
+      total_contradictions: totalContradictions,
+      total_contradictions_resolved: resolvedContradictions,
+      total_briefings: totalBriefings,
+      lp1_count: lpMap['LP-1'] ?? 0,
+      lp2_count: lpMap['LP-2'] ?? 0,
+      lp3_count: lpMap['LP-3'] ?? 0,
+      lp4_count: lpMap['LP-4'] ?? 0,
+      lp5_count: lpMap['LP-5'] ?? 0,
+      lp6_count: lpMap['LP-6'] ?? 0,
+      lp7_count: lpMap['LP-7'] ?? 0,
+      admission_rate: admissionRate !== null ? admissionRate : null,
+      hcl_confirmation_rate: hclRate !== null ? hclRate : null,
+      shg_trigger_rate: shgRate !== null ? shgRate : null,
+      avg_si_score: siAvg._avg.si_score ?? null,
+      avg_significance: siAvg._avg.significance ?? null,
+    },
+  });
 }
 
 // Dormancy check — weekly
