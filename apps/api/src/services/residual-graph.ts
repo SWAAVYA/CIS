@@ -138,7 +138,7 @@ export async function transformLineage(
       where: { id: lineageId },
       data: {
         terminal_state: 'transformed',
-        transformation_products: products,
+        transformation_products: products as unknown as import('@prisma/client').Prisma.InputJsonValue,
         transformation_weight: transformationWeight,
         closed_at: new Date(),
         closure_note: note ?? null,
@@ -218,6 +218,7 @@ export async function getInterventionRecommendation(residualInstanceId: string) 
     target_type_id: string;
     target_code: string;
     target_name: string;
+    observation_count: number;
     transformation_probability: number | null;
     transformation_weight_expected: number | null;
     net_debt_delta: number | null;
@@ -228,6 +229,7 @@ export async function getInterventionRecommendation(residualInstanceId: string) 
       rc.target_type_id,
       rt.code AS target_code,
       rt.name AS target_name,
+      rc.observation_count,
       rc.transformation_probability::float,
       rc.transformation_weight_expected::float,
       rc.net_debt_delta::float,
