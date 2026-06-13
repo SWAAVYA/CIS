@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../prisma.js';
+import { getCaseFrameState } from '../services/frame-graph.js';
 
 const router = Router();
 
@@ -20,12 +21,13 @@ router.get('/:id', async (req, res, next) => {
   try {
     const c = await prisma.cases.findUniqueOrThrow({ where: { id: req.params.id } });
 
-    const [byStatus, quarantined, connected, wsp, openContradictions] = await Promise.all([
+    const [byStatus, quarantined, connected, wsp, openContradictions, frameState] = await Promise.all([
       prisma.signals.groupBy({ by: ['lifecycle_status'], where: { case_id: c.id }, _count: true }),
       prisma.signals.count({ where: { case_id: c.id, is_quarantined: true } }),
       prisma.signals.count({ where: { case_id: c.id, is_connected: true } }),
       prisma.signals.count({ where: { case_id: c.id, is_wsp_protected: true } }),
       prisma.contradictions.count({ where: { case_id: c.id, status: 'ACTIVE' } }),
+      getCaseFrameState(c.id).catch(() => null),
     ]);
 
     const byStatusMap: Record<string, number> = {};
@@ -40,6 +42,15 @@ router.get('/:id', async (req, res, next) => {
         wsp_protected: wsp,
         open_contradictions: openContradictions,
       },
+      frame_state: frameState ? {
+        r_state:      frameState.rState,
+        r_confidence: frameState.rConfidence,
+        c_value:      frameState.cValue,
+        topology:     frameState.topologyType,
+        orientation:  frameState.orientation,
+        sig_counts:   frameState.sigCounts,
+        rtt_version:  frameState.rttTheoryVersion,
+      } : null,
     });
   } catch (err) { next(err); }
 });

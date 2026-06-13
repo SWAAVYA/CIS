@@ -205,29 +205,91 @@ function rStateConfidence(cValue: number, rState: string): number {
 }
 
 /**
- * Assess and write r_state for a case frame entity.
- * Called after updateCaseFrameEntityState so c_value is already current.
- * Uses raw query — frame_entity is not in Prisma schema.
+ * Classify topology type (A–E) from the signature mix and c_value.
+ *
+ * A — Early/minimal: c_value < 0.5 or no signatures yet registered.
+ *     Frame has registered first incongruence but pattern not established.
+ *
+ * B — Absorption failure: exception_proliferation > 40% of total signatures.
+ *     Frame is rejecting more observations than it can absorb — threshold stress.
+ *
+ * C — Internal contradiction: authority_drift + contradiction_density > 40%.
+ *     Frame is at war with itself — relationship and rate signals dominating.
+ *
+ * D — Reconfiguration: category_instability + reinterpretation > 40%.
+ *     Frame boundaries are actively shifting — configuration and direction signals.
+ *
+ * E — Full structural transition: c_value >= 3.5, distributed across signatures.
+ *     Multiple signature types active simultaneously — systemic transition underway.
+ */
+function classifyTopology(sigCounts: Record<string, number>, cValue: number): 'A' | 'B' | 'C' | 'D' | 'E' {
+  const total = Object.values(sigCounts).reduce((a, b) => a + b, 0);
+  if (total === 0 || cValue < 0.5) return 'A';
+
+  const ep = sigCounts.exception_proliferation ?? 0;
+  const ad = sigCounts.authority_drift ?? 0;
+  const cd = sigCounts.contradiction_density ?? 0;
+  const ci = sigCounts.category_instability ?? 0;
+  const ri = sigCounts.reinterpretation ?? 0;
+
+  if (cValue >= 3.5) return 'E';
+  if (ep / total > 0.40) return 'B';
+  if ((ad + cd) / total > 0.40) return 'C';
+  if ((ci + ri) / total > 0.40) return 'D';
+  return 'C';
+}
+
+/**
+ * Assess and write r_state, r_confidence, and topology_type for a case frame entity.
+ * Called after updateCaseFrameEntityState so c_value and sig counts are already current.
+ * Uses raw query — frame_entity is managed via raw SQL, Prisma model is read-only.
  */
 export async function assessRState(
   tx: Prisma.TransactionClient,
   caseFrameId: string
-): Promise<{ rState: string; rConfidence: number; ctop: CisOrientation }> {
-  const rows = await tx.$queryRaw<Array<{ c_value: number | null }>>`
-    SELECT c_value FROM frame_entity WHERE id = ${caseFrameId}::uuid
+): Promise<{ rState: string; rConfidence: number; topology: string; ctop: CisOrientation }> {
+  const rows = await tx.$queryRaw<Array<{
+    c_value: number | null;
+    sig_contradiction_density: number;
+    sig_exception_proliferation: number;
+    sig_authority_drift: number;
+    sig_category_instability: number;
+    sig_reinterpretation: number;
+    sig_recurrent_loop: number;
+  }>>`
+    SELECT c_value,
+           sig_contradiction_density, sig_exception_proliferation,
+           sig_authority_drift, sig_category_instability,
+           sig_reinterpretation, sig_recurrent_loop
+    FROM frame_entity WHERE id = ${caseFrameId}::uuid
   `;
-  const cValue = Number(rows[0]?.c_value ?? 0);
-  const rState = cValueToRState(cValue);
+
+  const row = rows[0];
+  const cValue = Number(row?.c_value ?? 0);
+  const sigCounts = {
+    contradiction_density:  row?.sig_contradiction_density  ?? 0,
+    exception_proliferation: row?.sig_exception_proliferation ?? 0,
+    authority_drift:         row?.sig_authority_drift         ?? 0,
+    category_instability:    row?.sig_category_instability    ?? 0,
+    reinterpretation:        row?.sig_reinterpretation        ?? 0,
+    recurrent_loop:          row?.sig_recurrent_loop          ?? 0,
+  };
+
+  const rState    = cValueToRState(cValue);
   const rConfidence = rStateConfidence(cValue, rState);
-  const ctop = ctopOrientation(rState);
+  const topology  = classifyTopology(sigCounts, cValue);
+  const ctop      = ctopOrientation(rState);
 
   await tx.$executeRaw`
     UPDATE frame_entity
-    SET r_state = ${rState}, r_confidence = ${rConfidence}, last_updated = NOW()
+    SET r_state       = ${rState},
+        r_confidence  = ${rConfidence},
+        topology_type = ${topology},
+        last_updated  = NOW()
     WHERE id = ${caseFrameId}::uuid
   `;
 
-  return { rState, rConfidence, ctop };
+  return { rState, rConfidence, topology, ctop };
 }
 
 // ─── CTOP orientation ─────────────────────────────────────────────────────

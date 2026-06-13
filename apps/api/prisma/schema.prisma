@@ -204,8 +204,9 @@ model admission_audit_sealed {
   rtt_theory_version  String   @default("pre-versioning")
   sealed_at           DateTime @default(now()) @db.Timestamptz
 
-  signal signals @relation(fields: [signal_id], references: [id])
-  case   cases   @relation(fields: [case_id], references: [id])
+  signal              signals              @relation(fields: [signal_id], references: [id])
+  case                cases                @relation(fields: [case_id], references: [id])
+  frame_relationships frame_relationship[]
 
   @@index([case_id])
   @@index([signal_id])
@@ -455,4 +456,60 @@ model analytics_snapshots {
   shg_trigger_rate             Decimal? @db.Decimal(5, 4)
   avg_si_score                 Decimal? @db.Decimal(4, 3)
   avg_significance             Decimal? @db.Decimal(4, 3)
+}
+
+// ── CIS v2 Frame Graph ────────────────────────────────────────────────────
+// Tables created via migration_frame_graph.sql (outside Prisma migrate).
+// Models added here for Prisma type safety; raw SQL used for writes because
+// generated columns (rtt_version_major/minor) are not representable in Prisma.
+
+model frame_entity {
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  identity                   String
+  level                      String
+  c_value                    Decimal? @db.Decimal(3, 1)
+  r_state                    String?
+  r_confidence               Decimal? @db.Decimal(3, 2)
+  topology_type              String?
+  sig_contradiction_density  Int      @default(0)
+  sig_exception_proliferation Int     @default(0)
+  sig_ontology_patch         Int      @default(0)
+  sig_category_instability   Int      @default(0)
+  sig_authority_drift        Int      @default(0)
+  sig_reinterpretation       Int      @default(0)
+  sig_recurrent_loop         Int      @default(0)
+  rtt_theory_version         String   @default("pre-versioning")
+  created_at                 DateTime @default(now()) @db.Timestamptz
+  last_updated               DateTime @default(now()) @db.Timestamptz
+
+  outgoing_relationships frame_relationship[] @relation("source_frame")
+  incoming_relationships frame_relationship[] @relation("target_frame")
+
+  @@index([level])
+  @@index([r_state])
+  @@index([topology_type])
+  @@index([rtt_theory_version])
+}
+
+model frame_relationship {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_frame_id   String   @db.Uuid
+  target_frame_id   String   @db.Uuid
+  relationship_type String
+  direction         String
+  strength          Decimal? @db.Decimal(3, 2)
+  activated_at_r    String?
+  audit_record_id   String?  @db.Uuid
+  rtt_theory_version String  @default("pre-versioning")
+  created_at        DateTime @default(now()) @db.Timestamptz
+
+  source_frame frame_entity           @relation("source_frame", fields: [source_frame_id], references: [id])
+  target_frame frame_entity           @relation("target_frame", fields: [target_frame_id], references: [id])
+  audit_record admission_audit_sealed? @relation(fields: [audit_record_id], references: [id])
+
+  @@index([source_frame_id])
+  @@index([target_frame_id])
+  @@index([relationship_type])
+  @@index([audit_record_id])
+  @@index([rtt_theory_version])
 }
