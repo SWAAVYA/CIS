@@ -1,7 +1,8 @@
 /**
  * Residual Graph v1.3 routes
- * POST /api/residual-types
- * GET  /api/residual-types
+ * POST  /api/residual-types
+ * GET   /api/residual-types
+ * PATCH /api/residual-types/:id
  * POST /api/cases/:id/residuals
  * GET  /api/cases/:id/residuals
  * POST /api/residuals/:id/resolve
@@ -52,6 +53,22 @@ router.get('/residual-types/:id', async (req, res, next) => {
   try {
     const rt = await getResidualType(req.params.id);
     if (!rt) return res.status(404).json({ error: 'residual type not found', status: 404 });
+    res.json(rt);
+  } catch (err) { next(err); }
+});
+
+router.patch('/residual-types/:id', async (req, res, next) => {
+  try {
+    const { description, weight, domain, name } = req.body;
+    const rt = await prisma.residual_type.update({
+      where: { id: req.params.id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(weight !== undefined && { weight }),
+        ...(domain !== undefined && { domain }),
+      },
+    });
     res.json(rt);
   } catch (err) { next(err); }
 });
