@@ -30,6 +30,9 @@ model cases {
   hypotheses                hypotheses[]
   frame_entities            frame_entity[]
   hypothesis_evidence       hypothesis_evidence[]
+  residual_instances        residual_instance[]
+  residual_lineages         residual_lineage[]
+  residual_interventions    residual_intervention[]
   briefings                 briefings[]
 }
 
@@ -135,6 +138,7 @@ model signals {
   resolved_contradictions contradictions[]     @relation("resolved_signal")
   released_options        released_options[]
   hypothesis_evidence     hypothesis_evidence[]
+  residual_instances      residual_instance[]
 
   @@index([case_id])
   @@index([domain_id])
@@ -457,6 +461,123 @@ model analytics_snapshots {
   shg_trigger_rate             Decimal? @db.Decimal(5, 4)
   avg_si_score                 Decimal? @db.Decimal(4, 3)
   avg_significance             Decimal? @db.Decimal(4, 3)
+}
+
+// ── Residual Graph v1.3 ───────────────────────────────────────────────────
+// EE_CIS_RESIDUAL_v1.3 — TRANSFORMED terminal state, transformation tracking,
+// intervention optimization. Tables created via 0004_residual_graph migration.
+
+model residual_type {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  weight      Decimal  @default(1.0) @db.Decimal(4, 2)
+  domain      String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  instances    residual_instance[]
+  trajectories residual_trajectory[]
+  clusters_as_source residual_cluster[] @relation("cluster_source")
+  clusters_as_target residual_cluster[] @relation("cluster_target")
+}
+
+model residual_instance {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id          String   @db.Uuid
+  residual_type_id String   @db.Uuid
+  signal_id        String?  @db.Uuid
+  description      String?
+  weight           Decimal? @db.Decimal(4, 2)
+  status           String   @default("open")
+  created_at       DateTime @default(now()) @db.Timestamptz
+  updated_at       DateTime @default(now()) @db.Timestamptz
+
+  case          cases          @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  residual_type residual_type  @relation(fields: [residual_type_id], references: [id])
+  signal        signals?       @relation(fields: [signal_id], references: [id])
+  lineages      residual_lineage[]
+  interventions residual_intervention[]
+
+  @@index([case_id])
+  @@index([residual_type_id])
+  @@index([case_id, status])
+}
+
+model residual_lineage {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  residual_instance_id    String    @db.Uuid
+  case_id                 String    @db.Uuid
+  terminal_state          String    @default("ongoing")
+  transformation_products Json      @default("[]")
+  transformation_weight   Decimal?  @db.Decimal(4, 2)
+  opened_at               DateTime  @default(now()) @db.Timestamptz
+  closed_at               DateTime? @db.Timestamptz
+  closure_note            String?
+
+  residual_instance residual_instance   @relation(fields: [residual_instance_id], references: [id], onDelete: Cascade)
+  case              cases               @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  interventions     residual_intervention[]
+
+  @@index([residual_instance_id])
+  @@index([case_id])
+  @@index([terminal_state])
+}
+
+model residual_trajectory {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  residual_type_id       String   @db.Uuid
+  subtype_tag            String?
+  observation_count      Int      @default(0)
+  resolved_count         Int      @default(0)
+  persistent_count       Int      @default(0)
+  transformed_count      Int      @default(0)
+  endpoint_predictions   Json     @default("{}")
+  transformation_targets Json     @default("{}")
+  last_updated           DateTime @default(now()) @db.Timestamptz
+
+  residual_type residual_type @relation(fields: [residual_type_id], references: [id])
+
+  @@index([residual_type_id])
+}
+
+model residual_cluster {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cluster_type                 String
+  source_type_id               String   @db.Uuid
+  target_type_id               String   @db.Uuid
+  observation_count            Int      @default(0)
+  co_occurrence_probability    Decimal? @db.Decimal(3, 2)
+  transformation_probability   Decimal? @db.Decimal(3, 2)
+  transformation_weight_expected Decimal? @db.Decimal(4, 2)
+  // net_debt_delta is a generated column — not in Prisma model, read via raw SQL
+  last_updated                 DateTime @default(now()) @db.Timestamptz
+
+  source_type residual_type @relation("cluster_source", fields: [source_type_id], references: [id])
+  target_type residual_type @relation("cluster_target", fields: [target_type_id], references: [id])
+
+  @@unique([cluster_type, source_type_id, target_type_id])
+  @@index([source_type_id])
+  @@index([target_type_id])
+  @@index([cluster_type])
+}
+
+model residual_intervention {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lineage_id           String    @db.Uuid
+  residual_instance_id String    @db.Uuid
+  case_id              String    @db.Uuid
+  intervention_type    String
+  intervention_note    String?
+  outcome_terminal_state String?
+  attempted_at         DateTime  @default(now()) @db.Timestamptz
+
+  lineage           residual_lineage   @relation(fields: [lineage_id], references: [id], onDelete: Cascade)
+  residual_instance residual_instance  @relation(fields: [residual_instance_id], references: [id])
+  case              cases              @relation(fields: [case_id], references: [id])
+
+  @@index([lineage_id])
+  @@index([case_id])
 }
 
 // ── CIS v2 Frame Graph ────────────────────────────────────────────────────
