@@ -10,6 +10,7 @@
  * GET  /api/audit/constraints/active     — the currently active constraint set
  * POST /api/audit/checkpoint             — compute and store a Merkle checkpoint
  * GET  /api/audit/checkpoints            — list all Merkle checkpoints
+ * GET  /api/audit/frame/:caseId          — Frame Entity state + CTOP orientation for a case
  */
 
 import { Router } from 'express';
@@ -20,6 +21,7 @@ import {
   GENESIS_PREV_HASH, buildDecisionTrace,
 } from '../services/audit-chain.js';
 import { ACTIVE_CONSTRAINTS, verifyConstraintDigest } from '../services/constraint-registry.js';
+import { getCaseFrameState } from '../services/frame-graph.js';
 
 const router = Router();
 
@@ -324,6 +326,21 @@ router.post('/checkpoints/:checkpointId/verify', async (req, res, next) => {
       proof,
     });
   } catch (err) { next(err); }
+});
+
+// ── GET /api/audit/frame/:caseId ──────────────────────────────────────────
+// Frame Entity state for a case + CTOP orientation (Detection / Preservation Planning)
+router.get('/frame/:caseId', async (req, res) => {
+  try {
+    const state = await getCaseFrameState(req.params.caseId!);
+    if (!state) {
+      return res.status(404).json({ error: 'No frame entity found for this case. Submit a signal first.' });
+    }
+    res.json(state);
+  } catch (err) {
+    console.error('Frame state error:', err);
+    res.status(500).json({ error: 'Failed to retrieve frame state' });
+  }
 });
 
 export default router;

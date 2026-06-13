@@ -19,6 +19,7 @@ import {
   getOrCreateCisFrameEntity,
   getOrCreateCaseFrameEntity,
   createClassifiesEdge,
+  updateCaseFrameEntityState,
 } from './frame-graph.js';
 
 export interface AdmissionResult {
@@ -95,7 +96,9 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
       dimThreshold: SI_DIM_THRESHOLD,
     });
 
-    await writeClassifiesEdge(tx, caseId, seal.sealedRecordId);
+    await writeClassifiesEdge(tx, caseId, seal.sealedRecordId, {
+      siScore, siRate, siDirection, siRelationship, siConfiguration, decision: 'REJECTED',
+    });
     return { decision: 'REJECTED', reason, seal };
   }
 
@@ -154,7 +157,9 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
     dimThreshold: SI_DIM_THRESHOLD,
   });
 
-  await writeClassifiesEdge(tx, caseId, seal.sealedRecordId);
+  await writeClassifiesEdge(tx, caseId, seal.sealedRecordId, {
+    siScore, siRate, siDirection, siRelationship, siConfiguration, decision,
+  });
   return { decision, reason, seal };
 }
 
@@ -167,11 +172,20 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
 async function writeClassifiesEdge(
   tx: Prisma.TransactionClient,
   caseId: string,
-  sealedRecordId: string
+  sealedRecordId: string,
+  signalParams: {
+    siScore: number;
+    siRate: number;
+    siDirection: number;
+    siRelationship: number;
+    siConfiguration: number;
+    decision: string;
+  }
 ): Promise<void> {
   const [cisFrameId, caseFrameId] = await Promise.all([
     getOrCreateCisFrameEntity(tx),
     getOrCreateCaseFrameEntity(tx, caseId),
   ]);
   await createClassifiesEdge(tx, { cisFrameId, caseFrameId, auditRecordId: sealedRecordId });
+  await updateCaseFrameEntityState(tx, caseFrameId, signalParams);
 }
