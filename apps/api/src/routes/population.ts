@@ -12,6 +12,7 @@ import {
   recordPropagationEvent,
   listPropagationEvents,
   getPopulationStats,
+  getReproductionDynamics,
   setInterventionEcologyClass,
   type PropagationChannel,
   type AttributionCategory,
@@ -87,6 +88,15 @@ router.get('/population-stats/:typeId', async (req, res, next) => {
     const stats = await getPopulationStats(req.params.typeId);
     if (!stats.length) return res.status(404).json({ error: 'residual type not found', status: 404 });
     res.json(stats[0]);
+  } catch (err) { next(err); }
+});
+
+// ── Reproduction Dynamics ────────────────────────────────────────────────────
+
+router.get('/population-stats/:typeId/reproduction', async (req, res, next) => {
+  try {
+    const dynamics = await getReproductionDynamics(req.params.typeId);
+    res.json(dynamics);
   } catch (err) { next(err); }
 });
 
