@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { resolveContradiction } from '../services/sls.js';
+import { detectClass3Contradictions } from '../services/contradiction-detector.js';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -12,6 +13,16 @@ const contradictionSchema = z.object({
 }).refine(d => d.signal_a_id !== d.signal_b_id, { message: 'signal_a_id and signal_b_id must be different' });
 
 const router = Router();
+
+// POST /api/cases/:id/contradictions/class3
+// Run CLASS 3 (Internal Synthesis Coherence) detection across all admitted signals.
+// On-demand only — requires full case signal set for Type A detection.
+router.post('/:id/contradictions/class3', async (req, res, next) => {
+  try {
+    const result = await detectClass3Contradictions(req.params.id);
+    res.json(result);
+  } catch (err) { next(err); }
+});
 
 // POST /api/cases/:id/contradictions
 router.post('/:id/contradictions', async (req, res, next) => {
