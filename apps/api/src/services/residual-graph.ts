@@ -236,7 +236,7 @@ export async function getInterventionRecommendation(residualInstanceId: string) 
       rc.co_occurrence_probability::float
     FROM residual_cluster rc
     JOIN residual_type rt ON rt.id = rc.target_type_id
-    WHERE rc.source_type_id = ${instance.residual_type_id}
+    WHERE rc.source_type_id = ${instance.residual_type_id}::uuid
       AND rc.cluster_type = 'transformation'
     ORDER BY rc.net_debt_delta ASC NULLS LAST
   `;
