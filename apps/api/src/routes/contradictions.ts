@@ -64,6 +64,10 @@ router.get('/:id/contradictions', async (req, res, next) => {
     const contradictions = await prisma.contradictions.findMany({
       where: { case_id: req.params.id, ...(status ? { status } : {}) },
       orderBy: { created_at: 'desc' },
+      include: {
+        signal_a: { select: { id: true, content: true, domain_id: true, si_score: true } },
+        signal_b: { select: { id: true, content: true, domain_id: true, si_score: true } },
+      },
     });
     res.json(contradictions);
   } catch (err) { next(err); }
