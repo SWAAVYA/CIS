@@ -88,6 +88,8 @@ router.post('/residuals/:id/resolve', async (req, res, next) => {
     const lineage = await _getActiveLineage(req.params.id);
     if (!lineage) return res.status(404).json({ error: 'no active lineage found', status: 404 });
     const closed = await resolveLineage(lineage.id, req.body.note);
+    _backfillRecommendationEvent(req.params.id, req.body.chosen_action ?? null, 'resolved', -1.0)
+      .catch(err => console.error('[residuals] backfill failed:', err));
     res.json({ ...closed, outcome_class: classifyOutcome('resolved', null) });
   } catch (err) { next(err); }
 });
@@ -97,6 +99,8 @@ router.post('/residuals/:id/persist', async (req, res, next) => {
     const lineage = await _getActiveLineage(req.params.id);
     if (!lineage) return res.status(404).json({ error: 'no active lineage found', status: 404 });
     const closed = await persistLineage(lineage.id, req.body.note);
+    _backfillRecommendationEvent(req.params.id, req.body.chosen_action ?? null, 'persistent', 0)
+      .catch(err => console.error('[residuals] backfill failed:', err));
     res.json({ ...closed, outcome_class: classifyOutcome('persistent', null) });
   } catch (err) { next(err); }
 });
@@ -147,6 +151,8 @@ router.post('/residuals/:id/transform', async (req, res, next) => {
       ? (Number((result.lineage as any).transformation_weight ?? 0) / sourceWeight) - 1.0
       : 0;
 
+    _backfillRecommendationEvent(req.params.id, req.body.chosen_action ?? null, 'transformed', netDebtDelta)
+      .catch(err => console.error('[residuals] backfill failed:', err));
     res.json({ ...result, outcome_class: classifyOutcome('transformed', netDebtDelta) });
   } catch (err) { next(err); }
 });
@@ -178,6 +184,34 @@ router.post('/residuals/:id/interventions', async (req, res, next) => {
 router.get('/residuals/:id/recommendation', async (req, res, next) => {
   try {
     const rec = await getInterventionRecommendation(req.params.id);
+
+    // Build candidate_actions array for the event log
+    const candidates = [
+      ...(rec.greedy_optimal ? [{
+        action: rec.greedy_optimal.cluster.target_code,
+        expected_debt_delta: rec.greedy_optimal.cluster.net_debt_delta,
+        rationale: rec.greedy_optimal.rationale,
+        cluster_evidence_count: rec.greedy_optimal.cluster.observation_count ?? null,
+      }] : []),
+      ...rec.dangerous_interventions.map((c: any) => ({
+        action: c.target_code,
+        expected_debt_delta: c.net_debt_delta,
+        rationale: 'dangerous — net debt increases',
+        cluster_evidence_count: c.observation_count ?? null,
+      })),
+    ];
+
+    // Log every recommendation — backfilled on lineage close
+    prisma.recommendation_event.create({
+      data: {
+        residual_instance_id: req.params.id,
+        candidate_actions: candidates,
+        recommended_action: rec.greedy_optimal?.cluster?.target_code ?? null,
+        expected_debt_delta: rec.greedy_optimal?.cluster?.net_debt_delta ?? null,
+        rtt_theory_version: 'v1.9',
+      },
+    }).catch(err => console.error('[residuals] recommendation_event write failed:', err));
+
     res.json(rec);
   } catch (err) { next(err); }
 });
@@ -226,12 +260,52 @@ router.post('/residual-clusters', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Helper ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function _getActiveLineage(instanceId: string) {
   return prisma.residual_lineage.findFirst({
     where: { residual_instance_id: instanceId, terminal_state: 'ongoing' },
     orderBy: { opened_at: 'desc' },
+  });
+}
+
+/**
+ * Backfill the most recent open recommendation_event for this instance.
+ * Called after any lineage close (resolve/persist/transform).
+ */
+async function _backfillRecommendationEvent(
+  instanceId: string,
+  chosenAction: string | null,
+  actualTerminalState: string,
+  actualDebtDelta: number | null
+) {
+  const event = await prisma.recommendation_event.findFirst({
+    where: { residual_instance_id: instanceId, followed_recommendation: null },
+    orderBy: { generated_at: 'desc' },
+  });
+  if (!event) return;
+
+  const expected = event.expected_debt_delta !== null ? Number(event.expected_debt_delta) : null;
+  const actual = actualDebtDelta;
+  const predictionError =
+    expected !== null && actual !== null
+      ? Math.abs(expected - actual) / Math.max(Math.abs(expected), Math.abs(actual), 0.01)
+      : null;
+
+  const followedRecommendation =
+    event.recommended_action !== null && chosenAction !== null
+      ? event.recommended_action === chosenAction
+      : null;
+
+  await prisma.recommendation_event.update({
+    where: { id: event.id },
+    data: {
+      chosen_action: chosenAction,
+      followed_recommendation: followedRecommendation,
+      actual_terminal_state: actualTerminalState,
+      actual_debt_delta: actual,
+      prediction_error: predictionError,
+    },
   });
 }
 

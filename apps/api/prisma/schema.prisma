@@ -496,8 +496,9 @@ model residual_instance {
   case          cases          @relation(fields: [case_id], references: [id], onDelete: Cascade)
   residual_type residual_type  @relation(fields: [residual_type_id], references: [id])
   signal        signals?       @relation(fields: [signal_id], references: [id])
-  lineages      residual_lineage[]
-  interventions residual_intervention[]
+  lineages              residual_lineage[]
+  interventions         residual_intervention[]
+  recommendation_events recommendation_event[]
 
   @@index([case_id])
   @@index([residual_type_id])
@@ -560,6 +561,28 @@ model residual_cluster {
   @@index([source_type_id])
   @@index([target_type_id])
   @@index([cluster_type])
+}
+
+model recommendation_event {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  residual_instance_id    String    @db.Uuid
+  generated_at            DateTime  @default(now()) @db.Timestamptz
+  candidate_actions       Json      @default("[]")
+  recommended_action      String?
+  expected_debt_delta     Decimal?  @db.Decimal(4, 2)
+  chosen_action           String?
+  followed_recommendation Boolean?
+  actual_terminal_state   String?
+  actual_debt_delta       Decimal?  @db.Decimal(4, 2)
+  prediction_error        Decimal?  @db.Decimal(4, 3)
+  rtt_theory_version      String    @default("v1.9")
+  created_at              DateTime  @default(now()) @db.Timestamptz
+
+  residual_instance residual_instance @relation(fields: [residual_instance_id], references: [id])
+
+  @@index([residual_instance_id])
+  @@index([followed_recommendation, actual_terminal_state])
+  @@map("recommendation_event")
 }
 
 model residual_intervention {
