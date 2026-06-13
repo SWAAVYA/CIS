@@ -21,7 +21,7 @@ import {
   GENESIS_PREV_HASH, buildDecisionTrace,
 } from '../services/audit-chain.js';
 import { ACTIVE_CONSTRAINTS, verifyConstraintDigest } from '../services/constraint-registry.js';
-import { getCaseFrameState } from '../services/frame-graph.js';
+import { getCaseFrameState, assessRState } from '../services/frame-graph.js';
 
 const router = Router();
 
@@ -341,6 +341,31 @@ router.get('/frame/:caseId', async (req, res) => {
     console.error('Frame state error:', err);
     res.status(500).json({ error: 'Failed to retrieve frame state' });
   }
+});
+
+// ── POST /api/audit/frame/backfill-r-state ────────────────────────────────
+// One-time backfill: assess r_state for all frame entities that have c_value
+// but r_state = null. Safe to run multiple times (skips already-assessed rows).
+router.post('/frame/backfill-r-state', async (_req, res, next) => {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ id: string; identity: string; c_value: number | null }>>`
+      SELECT id, identity, c_value
+      FROM frame_entity
+      WHERE c_value IS NOT NULL AND r_state IS NULL
+    `;
+
+    if (rows.length === 0) {
+      return res.json({ message: 'No frame entities need backfill', assessed: 0 });
+    }
+
+    const results = [];
+    for (const row of rows) {
+      const result = await prisma.$transaction(async (tx) => assessRState(tx, row.id));
+      results.push({ id: row.id, identity: row.identity, c_value: row.c_value, ...result });
+    }
+
+    res.json({ assessed: results.length, results });
+  } catch (err) { next(err); }
 });
 
 export default router;

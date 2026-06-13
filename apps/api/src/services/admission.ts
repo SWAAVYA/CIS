@@ -20,6 +20,7 @@ import {
   getOrCreateCaseFrameEntity,
   createClassifiesEdge,
   updateCaseFrameEntityState,
+  assessRState,
 } from './frame-graph.js';
 
 export interface AdmissionResult {
@@ -196,4 +197,5 @@ async function writeClassifiesEdge(
   ]);
   await createClassifiesEdge(tx, { cisFrameId, caseFrameId, auditRecordId: sealedRecordId });
   await updateCaseFrameEntityState(tx, caseFrameId, signalParams);
+  await assessRState(tx, caseFrameId);
 }

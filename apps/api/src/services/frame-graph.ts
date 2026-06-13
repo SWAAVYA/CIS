@@ -153,6 +153,83 @@ export async function updateCaseFrameEntityState(
   `;
 }
 
+// ─── R-state assessment ───────────────────────────────────────────────────
+
+/**
+ * Map c_value to an R-state.
+ *
+ * c_value accumulates as admitted signals raise structural incongruence pressure.
+ * The thresholds encode the RTT progression from initial recognition (R1) through
+ * confirmed intervention capacity (R8). R5 is the CTOP switching point.
+ *
+ * Scale: 0.0 – 5.0
+ *   0.0 – 0.4  → R1  (first incongruence registered, pattern not yet established)
+ *   0.4 – 0.9  → R2  (pattern emerging, operators aware)
+ *   0.9 – 1.5  → R3  (pattern formally acknowledged, response mobilising)
+ *   1.5 – 2.4  → R4  (committed response, resources allocated)
+ *   2.4 – 3.3  → R5  (confirmed — CTOP switches to PRESERVATION_PLANNING)
+ *   3.3 – 4.0  → R6  (active intervention underway)
+ *   4.0 – 4.6  → R7  (resolution phase, outcomes being locked in)
+ *   4.6 – 5.0  → R8  (integration — new frame stabilised)
+ */
+function cValueToRState(cValue: number): string {
+  if (cValue < 0.4) return 'R1';
+  if (cValue < 0.9) return 'R2';
+  if (cValue < 1.5) return 'R3';
+  if (cValue < 2.4) return 'R4';
+  if (cValue < 3.3) return 'R5';
+  if (cValue < 4.0) return 'R6';
+  if (cValue < 4.6) return 'R7';
+  return 'R8';
+}
+
+/**
+ * Confidence in the R-state assessment.
+ * Rises with c_value distance from the nearest threshold boundary.
+ * A frame sitting exactly on a boundary has low confidence; one well inside has high confidence.
+ */
+function rStateConfidence(cValue: number, rState: string): number {
+  const boundaries: Record<string, [number, number]> = {
+    R1: [0.0, 0.4], R2: [0.4, 0.9], R3: [0.9, 1.5],
+    R4: [1.5, 2.4], R5: [2.4, 3.3], R6: [3.3, 4.0],
+    R7: [4.0, 4.6], R8: [4.6, 5.0],
+  };
+  const [lo, hi] = boundaries[rState] ?? [0, 5];
+  const width = hi - lo;
+  const distFromLo = cValue - lo;
+  const distFromHi = hi - cValue;
+  const minDist = Math.min(distFromLo, distFromHi);
+  // Confidence = how far into the band we are, normalised to [0.50, 0.95]
+  const raw = width > 0 ? minDist / (width / 2) : 1;
+  return Math.round(Math.min(0.95, 0.50 + raw * 0.45) * 100) / 100;
+}
+
+/**
+ * Assess and write r_state for a case frame entity.
+ * Called after updateCaseFrameEntityState so c_value is already current.
+ * Uses raw query — frame_entity is not in Prisma schema.
+ */
+export async function assessRState(
+  tx: Prisma.TransactionClient,
+  caseFrameId: string
+): Promise<{ rState: string; rConfidence: number; ctop: CisOrientation }> {
+  const rows = await tx.$queryRaw<Array<{ c_value: number | null }>>`
+    SELECT c_value FROM frame_entity WHERE id = ${caseFrameId}::uuid
+  `;
+  const cValue = Number(rows[0]?.c_value ?? 0);
+  const rState = cValueToRState(cValue);
+  const rConfidence = rStateConfidence(cValue, rState);
+  const ctop = ctopOrientation(rState);
+
+  await tx.$executeRaw`
+    UPDATE frame_entity
+    SET r_state = ${rState}, r_confidence = ${rConfidence}, last_updated = NOW()
+    WHERE id = ${caseFrameId}::uuid
+  `;
+
+  return { rState, rConfidence, ctop };
+}
+
 // ─── CTOP orientation ─────────────────────────────────────────────────────
 
 export type CisOrientation = 'DETECTION' | 'PRESERVATION_PLANNING';
