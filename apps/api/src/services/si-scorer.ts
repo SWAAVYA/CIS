@@ -23,7 +23,9 @@ export interface SIResult {
 export async function scoreSignal(content: string): Promise<SIResult> {
   try {
     return await scoreWithAI(content);
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[si-scorer] AI scoring failed, falling back to rule-based:', msg);
     return scoreRuleBased(content);
   }
 }
