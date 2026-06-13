@@ -14,7 +14,7 @@
 
 import type { Prisma } from '@prisma/client';
 import { sealAdmission, type SealResult } from './audit-chain.js';
-import { ACTIVE_CONSTRAINTS } from './constraint-registry.js';
+import { ACTIVE_CONSTRAINTS, RTT_THEORY_VERSION } from './constraint-registry.js';
 
 export interface AdmissionResult {
   decision: string;
@@ -84,6 +84,7 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
       siScore, siMaxDimension, significance,
       decision: 'REJECTED',
       constraintVersion,
+      rttTheoryVersion: RTT_THEORY_VERSION,
       siThreshold: SI_MIN_THRESHOLD,
       sigThreshold: SIG_THRESHOLD,
       dimThreshold: SI_DIM_THRESHOLD,
@@ -141,6 +142,7 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
     siScore, siMaxDimension, significance,
     decision,
     constraintVersion,
+    rttTheoryVersion: RTT_THEORY_VERSION,
     siThreshold: SI_MIN_THRESHOLD,
     sigThreshold: SIG_THRESHOLD,
     dimThreshold: SI_DIM_THRESHOLD,

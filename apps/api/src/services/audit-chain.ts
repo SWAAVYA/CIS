@@ -195,8 +195,10 @@ export interface SealAdmissionParams {
   siMaxDimension: number;
   significance: number;
   decision: string;
-  /** From constraint-registry: the active constraint set version */
+  /** From constraint-registry: the active constraint set version (threshold audit trail) */
   constraintVersion: string;
+  /** From constraint-registry: the RTT theoretical framework version (ontological audit trail) */
+  rttTheoryVersion: string;
   siThreshold: number;
   sigThreshold: number;
   dimThreshold: number;
@@ -263,7 +265,7 @@ export async function sealAdmission(
     INSERT INTO admission_audit_sealed (
       signal_id, case_id, decision,
       si_score, si_threshold, significance, sig_threshold, dim_threshold,
-      constraint_version,
+      constraint_version, rtt_theory_version,
       signal_content, si_rate, si_direction, si_relationship, si_configuration,
       input_hash, decision_trace,
       prev_hash, current_hash
@@ -277,6 +279,7 @@ export async function sealAdmission(
       ${params.sigThreshold},
       ${params.dimThreshold},
       ${params.constraintVersion},
+      ${params.rttTheoryVersion},
       ${params.signalContent},
       ${params.siRate},
       ${params.siDirection},

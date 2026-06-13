@@ -69,6 +69,17 @@ export const ACTIVE_CONSTRAINTS: ConstraintSet = buildConstraintSet({
 });
 
 /**
+ * The RTT theoretical framework version in force for this process.
+ * Read from config at startup — not hardcoded.
+ * When RTT advances, update RTT_THEORY_VERSION in environment config.
+ * No code change required. Records the ontological framework against which
+ * all signal classifications are made (distinct from constraint_version,
+ * which records the threshold values in force).
+ */
+export const RTT_THEORY_VERSION: string =
+  process.env.RTT_THEORY_VERSION ?? 'v1.9';
+
+/**
  * Reconstruct a constraint set from a stored digest + values.
  * Used during replay: verify the digest still matches the stored values.
  */

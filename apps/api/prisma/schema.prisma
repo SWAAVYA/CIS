@@ -197,11 +197,12 @@ model admission_audit_sealed {
   si_direction       Decimal  @db.Decimal(5, 4)
   si_relationship    Decimal  @db.Decimal(5, 4)
   si_configuration   Decimal  @db.Decimal(5, 4)
-  input_hash         String   @db.Char(64)
-  decision_trace     Json
-  prev_hash          String   @db.Char(64)
-  current_hash       String   @unique @db.Char(64)
-  sealed_at          DateTime @default(now()) @db.Timestamptz
+  input_hash          String   @db.Char(64)
+  decision_trace      Json
+  prev_hash           String   @db.Char(64)
+  current_hash        String   @unique @db.Char(64)
+  rtt_theory_version  String   @default("pre-versioning")
+  sealed_at           DateTime @default(now()) @db.Timestamptz
 
   signal signals @relation(fields: [signal_id], references: [id])
   case   cases   @relation(fields: [case_id], references: [id])
