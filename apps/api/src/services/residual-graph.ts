@@ -186,6 +186,8 @@ export async function recordIntervention(data: {
   intervention_type: string;
   intervention_note?: string;
   outcome_terminal_state?: string;
+  attempted_at?: Date;
+  ecology_class?: string;
 }) {
   return prisma.residual_intervention.create({ data });
 }

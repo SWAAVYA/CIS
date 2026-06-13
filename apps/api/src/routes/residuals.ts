@@ -194,7 +194,7 @@ router.post('/residuals/:id/interventions', async (req, res, next) => {
     const lineage = await _getActiveLineage(req.params.id);
     if (!lineage) return res.status(404).json({ error: 'no active lineage found', status: 404 });
 
-    const { intervention_type, intervention_note, outcome_terminal_state } = req.body;
+    const { intervention_type, intervention_note, outcome_terminal_state, attempted_at, ecology_class } = req.body;
     if (!intervention_type) return res.status(400).json({ error: 'intervention_type required', code: 'MISSING_FIELD', status: 400 });
 
     const intervention = await recordIntervention({
@@ -204,6 +204,8 @@ router.post('/residuals/:id/interventions', async (req, res, next) => {
       intervention_type,
       intervention_note,
       outcome_terminal_state,
+      ...(attempted_at && { attempted_at: new Date(attempted_at) }),
+      ...(ecology_class && { ecology_class }),
     });
     res.status(201).json(intervention);
   } catch (err) { next(err); }
