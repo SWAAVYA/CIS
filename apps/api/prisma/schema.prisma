@@ -28,6 +28,7 @@ model cases {
   released_options          released_options[]
   competition_sets          competition_sets[]
   hypotheses                hypotheses[]
+  frame_entities            frame_entity[]
   hypothesis_evidence       hypothesis_evidence[]
   briefings                 briefings[]
 }
@@ -467,6 +468,7 @@ model frame_entity {
   id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   identity                   String
   level                      String
+  case_id                    String?  @db.Uuid
   c_value                    Decimal? @db.Decimal(3, 1)
   r_state                    String?
   r_confidence               Decimal? @db.Decimal(3, 2)
@@ -482,9 +484,11 @@ model frame_entity {
   created_at                 DateTime @default(now()) @db.Timestamptz
   last_updated               DateTime @default(now()) @db.Timestamptz
 
-  outgoing_relationships frame_relationship[] @relation("source_frame")
-  incoming_relationships frame_relationship[] @relation("target_frame")
+  cases                      cases?   @relation(fields: [case_id], references: [id])
+  outgoing_relationships     frame_relationship[] @relation("source_frame")
+  incoming_relationships     frame_relationship[] @relation("target_frame")
 
+  @@index([case_id])
   @@index([level])
   @@index([r_state])
   @@index([topology_type])

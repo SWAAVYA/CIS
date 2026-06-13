@@ -21,7 +21,7 @@ import {
   GENESIS_PREV_HASH, buildDecisionTrace,
 } from '../services/audit-chain.js';
 import { ACTIVE_CONSTRAINTS, verifyConstraintDigest } from '../services/constraint-registry.js';
-import { getCaseFrameState, assessRState } from '../services/frame-graph.js';
+import { getCaseFrameState, assessRState, recomputeCaseFrameState } from '../services/frame-graph.js';
 
 const router = Router();
 
@@ -365,6 +365,19 @@ router.post('/frame/backfill-r-state', async (_req, res, next) => {
     }
 
     res.json({ assessed: results.length, results });
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/audit/frame/recompute/:caseId ───────────────────────────────
+// Recompute case frame state from scratch using all sealed audit records.
+// Corrects stale sig_counts and reapplies current topology/c_value algorithm.
+router.post('/frame/recompute/:caseId', async (req, res, next) => {
+  try {
+    const result = await recomputeCaseFrameState(req.params.caseId!);
+    if (!result) {
+      return res.status(404).json({ error: 'No frame entity for this case', code: 'NOT_FOUND', status: 404 });
+    }
+    res.json({ recomputed: true, case_id: req.params.caseId, ...result });
   } catch (err) { next(err); }
 });
 

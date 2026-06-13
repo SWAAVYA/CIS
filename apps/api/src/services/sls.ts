@@ -1,4 +1,5 @@
 import prisma from '../prisma.js';
+import { recomputeCaseFrameState } from './frame-graph.js';
 
 const WSP_MIN_PERIODS = parseInt(process.env.WSP_MIN_PERIODS ?? '2', 10);
 const SI_MIN_THRESHOLD = parseFloat(process.env.SI_MIN_THRESHOLD ?? '0.25');
@@ -95,6 +96,15 @@ export async function transitionSignal(
       job_run_id: jobRunId ?? null,
     },
   });
+
+  // When an admitted signal is manually expired, recompute frame state so
+  // sig_counts and c_value reflect the current active signal population.
+  const wasActive = ['ADMITTED', 'RETAINED', 'ASSESSED', 'RESOLVED'].includes(signal.lifecycle_status);
+  if (toStatus === 'EXPIRED' && wasActive) {
+    recomputeCaseFrameState(signal.case_id).catch(err =>
+      console.warn('[sls] frame recompute after expire failed:', err instanceof Error ? err.message : err)
+    );
+  }
 
   return { permitted: true };
 }

@@ -70,10 +70,11 @@ export async function getOrCreateCaseFrameEntity(
   if (existing.length > 0) return existing[0]!.id;
 
   const created = await tx.$queryRaw<Array<{ id: string }>>`
-    INSERT INTO frame_entity (identity, level, rtt_theory_version)
+    INSERT INTO frame_entity (identity, level, case_id, rtt_theory_version)
     VALUES (
       ${identity},
       'organization',
+      ${caseId}::uuid,
       ${RTT_THEORY_VERSION}
     )
     ON CONFLICT DO NOTHING
@@ -130,11 +131,16 @@ export async function updateCaseFrameEntityState(
   }
 ): Promise<void> {
   const sig = dominantSignature(params);
-  const cDelta = params.decision !== 'REJECTED'
-    ? Math.min(params.siScore * 0.2, 0.2)
-    : 0.05;
 
-  // Each sig_* column updated via CASE — column names cannot be parameterized
+  // c_value uses EMA so it reflects current intensity, not cumulative pressure.
+  // Rejected signals increment exception_proliferation but do NOT shift c_value —
+  // rejections are absorption events, not evidence of structural incongruence.
+  // EMA target = siScore * 5.0 (maps [0,1] SI score to [0,5] c_value scale).
+  // Rate 0.15 gives ~6 signals to fully absorb a new intensity level.
+  const isAdmitted = params.decision !== 'REJECTED';
+  const emaTarget  = params.siScore * 5.0;
+  const emaRate    = 0.15;
+
   await tx.$executeRaw`
     UPDATE frame_entity SET
       sig_contradiction_density = sig_contradiction_density +
@@ -147,7 +153,13 @@ export async function updateCaseFrameEntityState(
         CASE WHEN ${sig} = 'authority_drift' THEN 1 ELSE 0 END,
       sig_category_instability = sig_category_instability +
         CASE WHEN ${sig} = 'category_instability' THEN 1 ELSE 0 END,
-      c_value = LEAST(5.0, COALESCE(c_value, 0.0) + ${cDelta}),
+      c_value = CASE
+        WHEN ${isAdmitted}
+        THEN LEAST(5.0, GREATEST(0.0,
+               COALESCE(c_value, 0.0) + (${emaTarget} - COALESCE(c_value, 0.0)) * ${emaRate}
+             ))
+        ELSE COALESCE(c_value, 0.0)
+      END,
       last_updated = NOW()
     WHERE id = ${caseFrameId}::uuid
   `;
@@ -232,10 +244,17 @@ function classifyTopology(sigCounts: Record<string, number>, cValue: number): 'A
   const ci = sigCounts.category_instability ?? 0;
   const ri = sigCounts.reinterpretation ?? 0;
 
+  // Admitted-signal basis: C/D classification uses only admitted-signal signatures.
+  // EP (rejection events) are excluded from the structural pattern denominator to
+  // prevent system quality issues (bad scorer period) from dominating topology.
+  const admittedBasis = Math.max(1, total - ep);
+
   if (cValue >= 3.5) return 'E';
-  if (ep / total > 0.40) return 'B';
-  if ((ad + cd) / total > 0.40) return 'C';
-  if ((ci + ri) / total > 0.40) return 'D';
+  // EP threshold at 50%: absorption failure requires majority of ALL signals rejected.
+  if (ep / total > 0.50) return 'B';
+  // C, D computed on admitted signals only.
+  if ((ad + cd) / admittedBasis > 0.40) return 'C';
+  if ((ci + ri) / admittedBasis > 0.40) return 'D';
   return 'C';
 }
 
@@ -371,6 +390,88 @@ export async function getCaseFrameState(
     orientation: ctopOrientation(fe.r_state),
     rttTheoryVersion: fe.rtt_theory_version,
   };
+}
+
+/**
+ * Recompute case frame entity state from scratch using current signal population.
+ * Rebuilds sig_counts and c_value from all non-EXPIRED signals' audit seals.
+ * Use after topology/c_value algorithm changes or to correct stale state.
+ */
+export async function recomputeCaseFrameState(
+  caseId: string
+): Promise<{ rState: string; rConfidence: number; topology: string; ctop: CisOrientation } | null> {
+  const identity = `case:${caseId}`;
+
+  const frameRows = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT id FROM frame_entity WHERE identity = ${identity} LIMIT 1
+  `;
+  if (frameRows.length === 0) return null;
+  const frameId = frameRows[0]!.id;
+
+  // Fetch all sealed records for this case, ordered by admission sequence
+  const seals = await prisma.$queryRaw<Array<{
+    decision: string;
+    si_score: number;
+    si_rate: number;
+    si_direction: number;
+    si_relationship: number;
+    si_configuration: number;
+  }>>`
+    SELECT decision, si_score, si_rate, si_direction, si_relationship, si_configuration
+    FROM admission_audit_sealed
+    WHERE case_id = ${caseId}::uuid
+    ORDER BY seq ASC
+  `;
+
+  // Recompute from scratch
+  let cValue = 0;
+  const counts = {
+    contradiction_density:   0,
+    exception_proliferation: 0,
+    authority_drift:         0,
+    category_instability:    0,
+    reinterpretation:        0,
+    recurrent_loop:          0,
+  };
+
+  for (const seal of seals) {
+    const sig = dominantSignature({
+      siRate:          Number(seal.si_rate),
+      siDirection:     Number(seal.si_direction),
+      siRelationship:  Number(seal.si_relationship),
+      siConfiguration: Number(seal.si_configuration),
+      decision:        seal.decision,
+    });
+    (counts as Record<string, number>)[sig] = ((counts as Record<string, number>)[sig] ?? 0) + 1;
+
+    if (seal.decision !== 'REJECTED') {
+      const target = Number(seal.si_score) * 5.0;
+      cValue = Math.min(5.0, Math.max(0.0, cValue + (target - cValue) * 0.15));
+    }
+  }
+
+  const rState     = cValueToRState(cValue);
+  const rConfidence = rStateConfidence(cValue, rState);
+  const topology   = classifyTopology(counts, cValue);
+  const ctop       = ctopOrientation(rState);
+
+  await prisma.$executeRaw`
+    UPDATE frame_entity
+    SET c_value                  = ${cValue},
+        r_state                  = ${rState},
+        r_confidence             = ${rConfidence},
+        topology_type            = ${topology},
+        sig_contradiction_density   = ${counts.contradiction_density},
+        sig_exception_proliferation = ${counts.exception_proliferation},
+        sig_authority_drift         = ${counts.authority_drift},
+        sig_category_instability    = ${counts.category_instability},
+        sig_reinterpretation        = ${counts.reinterpretation},
+        sig_recurrent_loop          = ${counts.recurrent_loop},
+        last_updated             = NOW()
+    WHERE id = ${frameId}::uuid
+  `;
+
+  return { rState, rConfidence, topology, ctop };
 }
 
 /**

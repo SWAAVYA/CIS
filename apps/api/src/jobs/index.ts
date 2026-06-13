@@ -34,6 +34,8 @@ async function runAnalyticsRefresh() {
 }
 
 export async function refreshAnalytics(): Promise<void> {
+  // Cap analytics queries so a slow scan never starves the connection pool.
+  await prisma.$executeRaw`SET LOCAL statement_timeout = '30s'`.catch(() => {});
   const [
     totalCases,
     totalDomains,
