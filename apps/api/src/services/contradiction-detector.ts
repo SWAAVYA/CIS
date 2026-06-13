@@ -9,6 +9,7 @@ export async function detectContradictions(
   signalId: string,
   caseId: string
 ): Promise<void> {
+  console.log(`[contradiction-detector] starting for signal ${signalId}`);
   const newSignal = await prisma.signals.findUnique({
     where: { id: signalId },
     select: { id: true, content: true, mismatch_type: true, domain_id: true },
