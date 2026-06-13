@@ -205,6 +205,7 @@ export interface SealAdmissionParams {
 }
 
 export interface SealResult {
+  sealedRecordId: string;
   currentHash: string;
   prevHash: string;
   inputHash: string;
@@ -261,7 +262,7 @@ export async function sealAdmission(
 
   const currentHash = computeSealHash(sealPayload, prevHash);
 
-  await tx.$executeRaw`
+  const inserted = await tx.$queryRaw<Array<{ id: string }>>`
     INSERT INTO admission_audit_sealed (
       signal_id, case_id, decision,
       si_score, si_threshold, significance, sig_threshold, dim_threshold,
@@ -290,7 +291,9 @@ export async function sealAdmission(
       ${prevHash},
       ${currentHash}
     )
+    RETURNING id
   `;
 
-  return { currentHash, prevHash, inputHash, decisionTrace };
+  const sealedRecordId = inserted[0]!.id;
+  return { sealedRecordId, currentHash, prevHash, inputHash, decisionTrace };
 }

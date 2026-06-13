@@ -15,6 +15,11 @@
 import type { Prisma } from '@prisma/client';
 import { sealAdmission, type SealResult } from './audit-chain.js';
 import { ACTIVE_CONSTRAINTS, RTT_THEORY_VERSION } from './constraint-registry.js';
+import {
+  getOrCreateCisFrameEntity,
+  getOrCreateCaseFrameEntity,
+  createClassifiesEdge,
+} from './frame-graph.js';
 
 export interface AdmissionResult {
   decision: string;
@@ -90,6 +95,7 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
       dimThreshold: SI_DIM_THRESHOLD,
     });
 
+    await writeClassifiesEdge(tx, caseId, seal.sealedRecordId);
     return { decision: 'REJECTED', reason, seal };
   }
 
@@ -148,5 +154,24 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
     dimThreshold: SI_DIM_THRESHOLD,
   });
 
+  await writeClassifiesEdge(tx, caseId, seal.sealedRecordId);
   return { decision, reason, seal };
+}
+
+/**
+ * Step 4 of the classification event flow (EE_CIS_AUDIT_CHAIN_v1.0 Section 2.2):
+ * After audit chain is written, create the classifies edge in the Frame Graph.
+ * Audit chain write always precedes Frame Graph write — sealedRecordId guarantees
+ * the FK target exists before the edge is created.
+ */
+async function writeClassifiesEdge(
+  tx: Prisma.TransactionClient,
+  caseId: string,
+  sealedRecordId: string
+): Promise<void> {
+  const [cisFrameId, caseFrameId] = await Promise.all([
+    getOrCreateCisFrameEntity(tx),
+    getOrCreateCaseFrameEntity(tx, caseId),
+  ]);
+  await createClassifiesEdge(tx, { cisFrameId, caseFrameId, auditRecordId: sealedRecordId });
 }
