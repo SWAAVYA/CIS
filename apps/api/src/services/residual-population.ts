@@ -91,23 +91,20 @@ export interface PopulationStats {
 const GROWTH_THRESHOLD = 0.1; // instances/month
 
 export async function getPopulationStats(typeId?: string): Promise<PopulationStats[]> {
-  const rows = await prisma.$queryRaw<Array<{
-    type_id: string;
-    code: string;
-    name: string;
-    type_weight: number;
-    population_size: bigint;
-    births_30d: bigint;
-    deaths_30d: bigint;
-    weighted_births_30d: number | null;
-    mean_instance_weight: number | null;
-    total_open_debt: number | null;
-    total_instances_ever: bigint;
-  }>>`
-    SELECT * FROM residual_population_stats
-    ${typeId ? prisma.$queryRaw`WHERE type_id = ${typeId}::uuid` : prisma.$queryRaw``}
-    ORDER BY code
-  `;
+  type StatsRow = {
+    type_id: string; code: string; name: string; type_weight: number;
+    population_size: bigint; births_30d: bigint; deaths_30d: bigint;
+    weighted_births_30d: number | null; mean_instance_weight: number | null;
+    total_open_debt: number | null; total_instances_ever: bigint;
+  };
+
+  const rows: StatsRow[] = typeId
+    ? await prisma.$queryRaw<StatsRow[]>`
+        SELECT * FROM residual_population_stats WHERE type_id = ${typeId}::uuid ORDER BY code
+      `
+    : await prisma.$queryRaw<StatsRow[]>`
+        SELECT * FROM residual_population_stats ORDER BY code
+      `;
 
   return rows.map(r => {
     const births = Number(r.births_30d);
