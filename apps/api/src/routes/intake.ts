@@ -4,6 +4,7 @@ import prisma from '../prisma.js';
 import { scoreSignal } from '../services/si-scorer.js';
 import { checkConnections, generateHypothesis } from '../services/shg.js';
 import { runAdmission } from '../services/admission.js';
+import { detectContradictions } from '../services/contradiction-detector.js';
 
 type WithCaseId = Request<{ id: string }>
 
@@ -347,6 +348,10 @@ router.post('/confirm', async (req: WithCaseId, res, next) => {
       });
 
       if (signal.lifecycle_status !== 'EXPIRED') {
+        // Fire-and-forget — don't slow down the response
+        detectContradictions(signal.id, caseId).catch(err =>
+          console.warn('[contradiction-detector] error:', err instanceof Error ? err.message : err)
+        );
         await checkConnections(signal.id);
         const pendingConns = await prisma.signal_connections.findMany({
           where: {

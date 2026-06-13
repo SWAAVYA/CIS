@@ -5,6 +5,7 @@ import { scoreSignal } from '../services/si-scorer.js';
 import { transitionSignal, updateSignalScores } from '../services/sls.js';
 import { checkConnections, generateHypothesis } from '../services/shg.js';
 import { runAdmission } from '../services/admission.js';
+import { detectContradictions } from '../services/contradiction-detector.js';
 import { ACTIVE_CONSTRAINTS } from '../services/constraint-registry.js';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -92,6 +93,9 @@ router.post('/:id/signals', async (req, res, next) => {
     const connections: unknown[] = [];
     const hypotheses: unknown[] = [];
     if (signal.lifecycle_status !== 'EXPIRED') {
+      detectContradictions(signal.id, req.params.id).catch(err =>
+        console.warn('[contradiction-detector] error:', err instanceof Error ? err.message : err)
+      );
       await checkConnections(signal.id);
       // Trigger hypothesis generation for any new unprocessed connections
       const pendingConns = await prisma.signal_connections.findMany({
