@@ -102,7 +102,7 @@ function dominantSignature(params: {
   siConfiguration: number;
   decision: string;
 }): 'contradiction_density' | 'reinterpretation' | 'authority_drift' | 'category_instability' | 'exception_proliferation' {
-  if (params.decision === 'REJECTED') return 'exception_proliferation';
+  // Only call this for admitted signals — updateCaseFrameEntityState returns early for REJECTED.
 
   const dims = [
     { sig: 'contradiction_density' as const, score: params.siRate },
@@ -130,16 +130,21 @@ export async function updateCaseFrameEntityState(
     decision: string;
   }
 ): Promise<void> {
+  // Rejected signals never reach the frame's processing layer — they are screened
+  // by the CIS admission filter, not absorbed by the subject frame. In RTT,
+  // exception_proliferation means the frame is generating special-case rules to
+  // absorb observations while maintaining coherence. A CIS rejection is the
+  // opposite: the signal was too weak to constitute an incongruence event at all.
+  // Rejected signals: no sig_count increment, no c_value change.
+  if (params.decision === 'REJECTED') return;
+
   const sig = dominantSignature(params);
 
   // c_value uses EMA so it reflects current intensity, not cumulative pressure.
-  // Rejected signals increment exception_proliferation but do NOT shift c_value —
-  // rejections are absorption events, not evidence of structural incongruence.
   // EMA target = siScore * 5.0 (maps [0,1] SI score to [0,5] c_value scale).
   // Rate 0.15 gives ~6 signals to fully absorb a new intensity level.
-  const isAdmitted = params.decision !== 'REJECTED';
-  const emaTarget  = params.siScore * 5.0;
-  const emaRate    = 0.15;
+  const emaTarget = params.siScore * 5.0;
+  const emaRate   = 0.15;
 
   await tx.$executeRaw`
     UPDATE frame_entity SET
@@ -153,13 +158,9 @@ export async function updateCaseFrameEntityState(
         CASE WHEN ${sig} = 'authority_drift' THEN 1 ELSE 0 END,
       sig_category_instability = sig_category_instability +
         CASE WHEN ${sig} = 'category_instability' THEN 1 ELSE 0 END,
-      c_value = CASE
-        WHEN ${isAdmitted}
-        THEN LEAST(5.0, GREATEST(0.0,
-               COALESCE(c_value, 0.0) + (${emaTarget} - COALESCE(c_value, 0.0)) * ${emaRate}
-             ))
-        ELSE COALESCE(c_value, 0.0)
-      END,
+      c_value = LEAST(5.0, GREATEST(0.0,
+        COALESCE(c_value, 0.0) + (${emaTarget} - COALESCE(c_value, 0.0)) * ${emaRate}
+      )),
       last_updated = NOW()
     WHERE id = ${caseFrameId}::uuid
   `;
@@ -435,6 +436,9 @@ export async function recomputeCaseFrameState(
   };
 
   for (const seal of seals) {
+    // Rejected signals: no sig_count, no c_value change (same rule as live admission).
+    if (seal.decision === 'REJECTED') continue;
+
     const sig = dominantSignature({
       siRate:          Number(seal.si_rate),
       siDirection:     Number(seal.si_direction),
@@ -444,10 +448,8 @@ export async function recomputeCaseFrameState(
     });
     (counts as Record<string, number>)[sig] = ((counts as Record<string, number>)[sig] ?? 0) + 1;
 
-    if (seal.decision !== 'REJECTED') {
-      const target = Number(seal.si_score) * 5.0;
-      cValue = Math.min(5.0, Math.max(0.0, cValue + (target - cValue) * 0.15));
-    }
+    const target = Number(seal.si_score) * 5.0;
+    cValue = Math.min(5.0, Math.max(0.0, cValue + (target - cValue) * 0.15));
   }
 
   const rState     = cValueToRState(cValue);
