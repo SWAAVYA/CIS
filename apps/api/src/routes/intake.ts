@@ -1,7 +1,7 @@
 import { Router, Request } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
-import { scoreSignal } from '../services/si-scorer.js';
+import { scoreSignalSync } from '../services/si-scorer.js';
 import { checkConnections, generateHypothesis } from '../services/shg.js';
 import { runAdmission } from '../services/admission.js';
 import { detectContradictions } from '../services/contradiction-detector.js';
@@ -297,7 +297,7 @@ router.post('/confirm', async (req: WithCaseId, res, next) => {
     const allLpFlags: string[][] = [];
 
     for (const candidate of candidates) {
-      const siResult = await scoreSignal(candidate.text);
+      const siResult = scoreSignalSync(candidate.text);
       if (candidate.mismatch_type) siResult.mismatch_type = candidate.mismatch_type;
       if (candidate.deviation_direction) siResult.deviation_direction = candidate.deviation_direction;
 
@@ -348,18 +348,21 @@ router.post('/confirm', async (req: WithCaseId, res, next) => {
       });
 
       if (signal.lifecycle_status !== 'EXPIRED') {
-        // Fire-and-forget — don't slow down the response
+        // All post-admission work is fire-and-forget — response returns immediately
         detectContradictions(signal.id, caseId).catch(err =>
           console.warn('[contradiction-detector] error:', err instanceof Error ? err.message : err)
         );
-        await checkConnections(signal.id);
-        const pendingConns = await prisma.signal_connections.findMany({
-          where: {
-            OR: [{ signal_a_id: signal.id }, { signal_b_id: signal.id }],
-            shg_triggered: false,
-          },
-        });
-        await Promise.allSettled(pendingConns.map(c => generateHypothesis(c.id)));
+        checkConnections(signal.id).then(async () => {
+          const pendingConns = await prisma.signal_connections.findMany({
+            where: {
+              OR: [{ signal_a_id: signal.id }, { signal_b_id: signal.id }],
+              shg_triggered: false,
+            },
+          });
+          await Promise.allSettled(pendingConns.map(c => generateHypothesis(c.id)));
+        }).catch(err =>
+          console.warn('[shg] error:', err instanceof Error ? err.message : err)
+        );
       }
 
       const lpFlags = await prisma.signal_events.findMany({

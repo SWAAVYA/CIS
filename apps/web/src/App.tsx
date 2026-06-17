@@ -42,7 +42,7 @@ function CaseSidebar() {
       style={{ background: 'var(--surface)', borderRight: '1px solid var(--border)', minHeight: '100vh' }}
     >
       <div className="p-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <p className="font-serif italic text-xs mb-1" style={{ color: 'var(--text-muted)' }}>cis</p>
+        <p className="font-mono text-xs mb-1" style={{ color: 'var(--accent)', letterSpacing: '0.06em' }}>alvirassa</p>
         <p className="font-serif text-sm leading-tight" style={{ color: 'var(--text)' }}>
           {caseData?.title ?? '—'}
         </p>

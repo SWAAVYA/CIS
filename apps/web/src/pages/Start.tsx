@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { createCase, getCaseByCode } from '../api/client'
+import { AlvirassaLogo } from '../components/AlvirassaLogo'
 
 export function Start() {
   const navigate = useNavigate()
@@ -43,10 +44,7 @@ export function Start() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md">
-        <p className="font-serif italic text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
-          cognitive intelligence system
-        </p>
-        <h1 className="font-serif text-6xl mb-2" style={{ color: 'var(--accent)' }}>CIS</h1>
+        <AlvirassaLogo className="w-64 mb-6" />
         <p className="text-sm mb-8" style={{ color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace' }}>
           Submit observations. Preserve what remains unexplained. Connect residuals across domains.
         </p>
@@ -59,7 +57,7 @@ export function Start() {
 
         <form onSubmit={handleCreate} className="mb-6">
           <label className="block text-xs font-sans uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-            New Investigation
+            New Case
           </label>
           <div className="flex gap-2">
             <input
@@ -83,7 +81,7 @@ export function Start() {
 
         <form onSubmit={handleRetrieve}>
           <label className="block text-xs font-sans uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-            Retrieve Existing Case
+            Open Case
           </label>
           <div className="flex gap-2">
             <input
@@ -100,16 +98,11 @@ export function Start() {
               className="px-4 py-2 text-xs rounded font-sans uppercase tracking-widest disabled:opacity-50"
               style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', fontWeight: 500 }}
             >
-              {retrieving ? '...' : 'Retrieve'}
+              {retrieving ? '...' : 'Open'}
             </button>
           </div>
         </form>
 
-        <div className="mt-8 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <Link to="/analytics" className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
-            → System Analytics
-          </Link>
-        </div>
       </div>
     </div>
   )

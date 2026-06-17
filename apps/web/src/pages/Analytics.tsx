@@ -23,8 +23,8 @@ export function Analytics() {
     <div className="min-h-screen p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <p className="font-serif italic text-sm mb-1" style={{ color: 'var(--text-muted)' }}>cognitive intelligence system</p>
-          <h1 className="font-serif text-3xl" style={{ color: 'var(--accent)' }}>System Analytics</h1>
+          <p className="font-mono text-xs mb-1" style={{ color: 'var(--accent)', letterSpacing: '0.06em' }}>alvirassa</p>
+          <h1 className="font-serif text-3xl" style={{ color: 'var(--accent)' }}>Analytics</h1>
         </div>
         <Link to="/" className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>← Back</Link>
       </div>

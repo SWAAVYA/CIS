@@ -28,6 +28,11 @@ export async function scoreSignal(content: string): Promise<SIResult> {
   }
 }
 
+/** Fast synchronous scorer for manual signal entry — no LLM call. */
+export function scoreSignalSync(content: string): SIResult {
+  return scoreRuleBased(content);
+}
+
 // ─── AI scorer ────────────────────────────────────────────────────────────
 
 function sanitizeForPrompt(content: string): string {
