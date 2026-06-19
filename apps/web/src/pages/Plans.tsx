@@ -125,7 +125,7 @@ export function Plans() {
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
-        <h1 style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '1.6rem', color: accent, fontWeight: 400, marginBottom: '0.6rem' }}>Plans</h1>
+        <h1 style={{ fontFamily: 'DM Mono, monospace', fontSize: '1rem', color: accent, fontWeight: 400, marginBottom: '0.6rem', letterSpacing: '0.1em' }}>plans</h1>
         <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.78rem', color: muted, lineHeight: 1.8, marginBottom: '3rem' }}>
           Choose the plan that fits your investigation.
         </p>

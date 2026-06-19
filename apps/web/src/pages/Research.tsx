@@ -32,7 +32,7 @@ export function Research() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
-        <h1 style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '1.6rem', color: accent, fontWeight: 400, marginBottom: '0.6rem' }}>research</h1>
+        <h1 style={{ fontFamily: 'DM Mono, monospace', fontSize: '1rem', color: accent, fontWeight: 400, marginBottom: '0.6rem', letterSpacing: '0.1em' }}>research</h1>
         <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem', textAlign: 'justify' }}>The observation system is built on three independent theoretical frameworks developed to address a common problem: how to identify important signals before conventional methods recognise them, how to understand large transitions while they are happening, and how to discover connections that remain invisible when domains are studied in isolation.</p>
         <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem', textAlign: 'justify' }}>Each framework serves a different purpose. Together they provide the foundation for the observation infrastructure.</p>
 
