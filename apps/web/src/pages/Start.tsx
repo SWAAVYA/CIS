@@ -44,10 +44,10 @@ export function Start() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md">
-        <p className="font-serif italic text-sm mb-3" style={{ color: 'var(--text-muted)' }}>
+        <AlvirassaLogo className="mb-3" />
+        <p className="font-serif text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
           cognitive intelligence system
         </p>
-        <AlvirassaLogo className="mb-6" />
         <p className="text-sm mb-8" style={{ color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace' }}>
           Submit observations. Preserve what remains unexplained. Connect residuals across domains.
         </p>

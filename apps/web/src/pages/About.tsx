@@ -45,7 +45,7 @@ export function About() {
         {/* Hero */}
         <div style={{ marginBottom: '3.5rem' }}>
           <AlvirassaLogo size="2.8rem" />
-          <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontStyle: 'italic', fontSize: '0.82rem', color: muted, marginTop: '1rem', letterSpacing: '0.05em' }}>
+          <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.82rem', color: muted, marginTop: '1rem', letterSpacing: '0.05em' }}>
             cognitive intelligence system
           </p>
           <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8, marginTop: '1.5rem', maxWidth: 500 }}>

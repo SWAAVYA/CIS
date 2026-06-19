@@ -134,9 +134,13 @@ export function Plans() {
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '4rem 2rem 6rem' }}>
 
-        {/* Header */}
-        <div style={{ marginBottom: '3rem' }}>
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8 }}>
+        {/* Hero */}
+        <div style={{ marginBottom: '3.5rem' }}>
+          <AlvirassaLogo size="2.8rem" />
+          <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.82rem', color: muted, marginTop: '1rem', letterSpacing: '0.05em' }}>
+            cognitive intelligence system
+          </p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8, marginTop: '1.5rem' }}>
             Choose the plan that fits your investigation. All features are built for serious analytical work.
           </p>
         </div>
