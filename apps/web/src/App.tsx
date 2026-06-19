@@ -9,6 +9,8 @@ import { ContradictionLedger } from './pages/ContradictionLedger'
 import { CognitiveBriefing } from './pages/CognitiveBriefing'
 import { DomainManager } from './pages/DomainManager'
 import { Analytics } from './pages/Analytics'
+import { About } from './pages/About'
+import { Research } from './pages/Research'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useCase } from './hooks/useCase'
 
@@ -112,6 +114,8 @@ export function App() {
     <Routes>
       <Route path="/" element={<ErrorBoundary><Start /></ErrorBoundary>} />
       <Route path="/analytics" element={<ErrorBoundary><Analytics /></ErrorBoundary>} />
+      <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
+      <Route path="/research" element={<ErrorBoundary><Research /></ErrorBoundary>} />
       <Route path="/cases/:id/*" element={<CaseLayout />} />
     </Routes>
   )

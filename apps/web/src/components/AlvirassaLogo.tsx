@@ -1,58 +1,72 @@
-import type { SVGProps } from 'react'
+import type { CSSProperties } from 'react'
 
-export function AlvirassaLogo(props: SVGProps<SVGSVGElement>) {
-  // Layout: DM Mono at 40px, forced to 26px/char via textLength
-  // "al" (52px) | crow's-nest v (26px) | "irassa" (156px) = 234px
-  // Left margin 18px, total viewBox width 270px
-  const base = 54
-  const capTop = 24  // base - 30 (cap height at 40px)
+interface Props {
+  className?: string
+  style?: CSSProperties
+  size?: string  // CSS font-size, default '1.9rem'
+}
 
+function ShinyDot({ top, left, right, bottom, size, opacity, blur }: {
+  top?: string | number, left?: string | number, right?: string | number, bottom?: string | number,
+  size: number, opacity: number, blur: number
+}) {
   return (
-    <svg viewBox="0 0 270 72" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      {/* Weak signal dots — sparse, faint */}
-      <circle cx="5"   cy="12" r="1.5" fill="#c8b87a" opacity="0.18" />
-      <circle cx="142" cy="5"  r="1.8" fill="#c8b87a" opacity="0.13" />
-      <circle cx="250" cy="30" r="1.3" fill="#c8b87a" opacity="0.20" />
-      <circle cx="263" cy="60" r="1.0" fill="#c8b87a" opacity="0.11" />
+    <span style={{
+      position: 'absolute',
+      top, left, right, bottom,
+      width: size,
+      height: size,
+      borderRadius: '50%',
+      background: `radial-gradient(circle, #f5eccc 0%, #c8b87a 65%, transparent 100%)`,
+      boxShadow: `0 0 ${blur}px ${blur * 0.6}px rgba(200,184,122,${opacity * 0.55})`,
+      opacity,
+      display: 'block',
+      pointerEvents: 'none',
+      flexShrink: 0,
+    }} />
+  )
+}
 
-      {/* "al" */}
-      <text
-        fontFamily="'DM Mono', 'Courier New', monospace"
-        fontSize="40"
-        fill="#c8b87a"
-        x="18"
-        y={base}
-        textLength="52"
-        lengthAdjust="spacingAndGlyphs"
-      >
-        al
-      </text>
+export function AlvirassaLogo({ className, style, size = '1.9rem' }: Props) {
+  return (
+    <div className={className} style={{ position: 'relative', display: 'inline-block', ...style }}>
+      {/* Shiny signal dots — sparse, like distant lights at sea */}
+      <ShinyDot top={-11} left={-16}     size={2.5} opacity={0.40} blur={5} />
+      <ShinyDot top={-5}  left="20%"     size={1.8} opacity={0.28} blur={3} />
+      <ShinyDot top={3}   right={-13}    size={3}   opacity={0.22} blur={6} />
+      <ShinyDot bottom={-7} left="58%"   size={1.5} opacity={0.32} blur={3} />
 
-      {/* Crow's nest V — the gajeiro's lookout platform */}
-      {/* Box: x=70..96, y=capTop..base (26×30px) */}
-      <g transform={`translate(70, ${capTop})`} fill="#c8b87a">
-        {/* Left arm */}
-        <path d="M1,0 L10,28 L14,28 L14,26 L13,26 L5,0 Z" />
-        {/* Right arm */}
-        <path d="M25,0 L15,28 L13,28 L13,26 L14,26 L21,0 Z" />
-        {/* Nest platform — the crow's nest floor */}
-        <rect x="11" y="26" width="4" height="2" />
-        {/* Gajeiro — lookout at the rim of the left arm */}
-        <circle cx="3" cy="4" r="2.5" />
-      </g>
-
-      {/* "irassa" */}
-      <text
-        fontFamily="'DM Mono', 'Courier New', monospace"
-        fontSize="40"
-        fill="#c8b87a"
-        x="96"
-        y={base}
-        textLength="156"
-        lengthAdjust="spacingAndGlyphs"
-      >
-        irassa
-      </text>
-    </svg>
+      {/* Wordmark */}
+      <span style={{
+        fontFamily: "'Instrument Serif', Georgia, serif",
+        fontSize: size,
+        color: '#c8b87a',
+        letterSpacing: '0.12em',
+        display: 'inline-block',
+        fontWeight: 400,
+        fontStyle: 'normal',
+        lineHeight: 1,
+        userSelect: 'none',
+      }}>
+        alvi
+        {/* The v — the crow's nest. A tiny glowing dot marks the gajeiro on the rim. */}
+        <span style={{ position: 'relative', display: 'inline-block' }}>
+          v
+          <span style={{
+            position: 'absolute',
+            top: '0.06em',
+            left: '0.07em',
+            width: '0.14em',
+            height: '0.14em',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #f5eccc 0%, #c8b87a 75%)',
+            boxShadow: '0 0 4px 1px rgba(245,236,204,0.5)',
+            display: 'block',
+            pointerEvents: 'none',
+          }} />
+        </span>
+        rassa
+      </span>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { createCase, getCaseByCode } from '../api/client'
 import { AlvirassaLogo } from '../components/AlvirassaLogo'
 
@@ -44,7 +44,10 @@ export function Start() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md">
-        <AlvirassaLogo className="w-64 mb-6" />
+        <p className="font-serif italic text-sm mb-3" style={{ color: 'var(--text-muted)' }}>
+          cognitive intelligence system
+        </p>
+        <AlvirassaLogo className="mb-6" />
         <p className="text-sm mb-8" style={{ color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace' }}>
           Submit observations. Preserve what remains unexplained. Connect residuals across domains.
         </p>
@@ -103,6 +106,11 @@ export function Start() {
           </div>
         </form>
 
+        <div className="mt-8 pt-4 flex gap-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <Link to="/about" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>about</Link>
+          <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
+          <Link to="/research" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>research</Link>
+        </div>
       </div>
     </div>
   )
