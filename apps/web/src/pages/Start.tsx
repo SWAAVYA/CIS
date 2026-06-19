@@ -3,6 +3,28 @@ import { useNavigate, Link } from 'react-router-dom'
 import { createCase, getCaseByCode } from '../api/client'
 import { AlvirassaLogo } from '../components/AlvirassaLogo'
 
+const inputStyle: React.CSSProperties = {
+  flex: 1,
+  padding: '0.6rem 0.75rem',
+  background: 'var(--surface)',
+  color: 'var(--text)',
+  border: '1px solid var(--border2)',
+  borderRadius: 3,
+  fontFamily: 'DM Mono, monospace',
+  fontSize: '0.8rem',
+  outline: 'none',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'DM Mono, monospace',
+  fontSize: '0.6rem',
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: 'var(--text-dim)',
+  marginBottom: '0.4rem',
+}
+
 export function Start() {
   const navigate = useNavigate()
   const [caseName, setCaseName] = useState('')
@@ -43,76 +65,104 @@ export function Start() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
-      <div className="w-full max-w-md">
-        <AlvirassaLogo className="mb-3" />
-        <p className="font-serif text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
-          cognitive intelligence system
-        </p>
-        <p className="text-sm mb-8" style={{ color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace' }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+
+        {/* Logo mark — subtitle justified to match wordmark width */}
+        <AlvirassaLogo showSubtitle size="2rem" style={{ marginBottom: '2.8rem' }} />
+
+        {/* Description */}
+        <p style={{
+          fontFamily: 'DM Mono, monospace',
+          fontSize: '0.75rem',
+          color: 'var(--text-muted)',
+          lineHeight: 1.8,
+          marginBottom: '2.4rem',
+          opacity: 0.7,
+        }}>
           Submit observations. Preserve what remains unexplained. Connect residuals across domains.
         </p>
 
         {error && (
-          <div className="mb-4 p-3 text-sm" style={{ background: '#7a303022', color: 'var(--red)', border: '1px solid var(--red-dim)' }}>
+          <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', fontSize: '0.78rem', background: '#7a303022', color: 'var(--red)', border: '1px solid var(--red-dim)', fontFamily: 'DM Mono, monospace' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleCreate} className="mb-6">
-          <label className="block text-xs font-sans uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-            New Case
-          </label>
-          <div className="flex gap-2">
+        {/* New case */}
+        <form onSubmit={handleCreate} style={{ marginBottom: '1.2rem' }}>
+          <label style={labelStyle}>New Case</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               value={caseName}
               onChange={e => setCaseName(e.target.value)}
               placeholder="Case name"
-              className="flex-1 px-3 py-2 text-sm rounded font-mono"
-              style={{ background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
+              style={inputStyle}
             />
             <button
               type="submit"
               disabled={creating || !caseName.trim()}
-              className="px-4 py-2 text-xs rounded font-sans uppercase tracking-widest disabled:opacity-50"
-              style={{ background: 'var(--accent)', color: 'var(--bg)', fontWeight: 500 }}
+              style={{
+                padding: '0.6rem 1.1rem',
+                fontFamily: 'DM Mono, monospace',
+                fontSize: '0.68rem',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                background: 'var(--accent)',
+                color: 'var(--bg)',
+                border: 'none',
+                borderRadius: 3,
+                cursor: 'pointer',
+                opacity: creating || !caseName.trim() ? 0.45 : 1,
+                flexShrink: 0,
+              }}
             >
-              {creating ? '...' : 'Begin'}
+              {creating ? '…' : 'Begin'}
             </button>
           </div>
         </form>
 
+        {/* Open case */}
         <form onSubmit={handleRetrieve}>
-          <label className="block text-xs font-sans uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
-            Open Case
-          </label>
-          <div className="flex gap-2">
+          <label style={labelStyle}>Open Case</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               value={accessCode}
               onChange={e => setAccessCode(e.target.value)}
-              placeholder="ACCESS CODE"
-              className="flex-1 px-3 py-2 text-sm rounded font-mono uppercase tracking-widest"
-              style={{ background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border2)', outline: 'none' }}
+              placeholder="Access code"
+              style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '0.1em' }}
             />
             <button
               type="submit"
               disabled={retrieving || !accessCode.trim()}
-              className="px-4 py-2 text-xs rounded font-sans uppercase tracking-widest disabled:opacity-50"
-              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border2)', fontWeight: 500 }}
+              style={{
+                padding: '0.6rem 1.1rem',
+                fontFamily: 'DM Mono, monospace',
+                fontSize: '0.68rem',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border2)',
+                borderRadius: 3,
+                cursor: 'pointer',
+                opacity: retrieving || !accessCode.trim() ? 0.45 : 1,
+                flexShrink: 0,
+              }}
             >
-              {retrieving ? '...' : 'Open'}
+              {retrieving ? '…' : 'Open'}
             </button>
           </div>
         </form>
 
-        <div className="mt-8 pt-4 flex gap-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <Link to="/about" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>about</Link>
-          <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
-          <Link to="/research" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>research</Link>
-          <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
-          <Link to="/plans" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>plans</Link>
+        {/* Footer links */}
+        <div style={{ marginTop: '3rem', paddingTop: '1.2rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1.2rem' }}>
+          <Link to="/about" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.65rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.08em' }}>about</Link>
+          <Link to="/research" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.65rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.08em' }}>research</Link>
+          <Link to="/plans" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.65rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.08em' }}>plans</Link>
         </div>
+
       </div>
     </div>
   )

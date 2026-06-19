@@ -3,7 +3,8 @@ import type { CSSProperties } from 'react'
 interface Props {
   className?: string
   style?: CSSProperties
-  size?: string  // CSS font-size, default '2rem'
+  size?: string
+  showSubtitle?: boolean
 }
 
 function SignalDot({ top, left, right, bottom, size, opacity }: {
@@ -17,38 +18,58 @@ function SignalDot({ top, left, right, bottom, size, opacity }: {
       width: size,
       height: size,
       borderRadius: '50%',
-      background: `radial-gradient(circle at 30% 30%, rgba(245,236,204,0.9), rgba(200,184,122,0.4))`,
-      boxShadow: `0 0 ${size * 1.5}px rgba(200,184,122,${opacity * 0.4})`,
+      background: 'radial-gradient(circle at 35% 35%, rgba(245,236,204,0.95), rgba(200,184,122,0.3))',
+      boxShadow: `0 0 ${size * 2}px rgba(200,184,122,0.35)`,
       opacity,
       display: 'block',
       pointerEvents: 'none',
-      flexShrink: 0,
     }} />
   )
 }
 
-export function AlvirassaLogo({ className, style, size = '2rem' }: Props) {
+export function AlvirassaLogo({ className, style, size = '2rem', showSubtitle = false }: Props) {
   return (
     <div className={className} style={{ position: 'relative', display: 'inline-block', ...style }}>
-      {/* Signal dots — scattered weak signals at sea */}
-      <SignalDot top={-14} left={-18}    size={2.2} opacity={0.35} />
-      <SignalDot top={-6}  left="25%"    size={1.6} opacity={0.25} />
-      <SignalDot top={8}   right={-16}   size={2.8} opacity={0.30} />
-      <SignalDot bottom={-10} left="60%" size={1.4} opacity={0.28} />
+      <SignalDot top={-12} left={-16}    size={2.2} opacity={0.38} />
+      <SignalDot top={-4}  left="24%"   size={1.5} opacity={0.22} />
+      <SignalDot top={6}   right={-14}  size={2.6} opacity={0.28} />
+      <SignalDot bottom={-8} left="62%" size={1.4} opacity={0.25} />
 
-      {/* Wordmark */}
-      <span style={{
-        fontFamily: "'IBM Plex Sans', sans-serif",
-        fontSize: size,
-        fontWeight: 400,
-        color: '#c8b87a',
-        letterSpacing: '0.16em',
-        display: 'inline-block',
-        lineHeight: 1,
-        userSelect: 'none',
-      }}>
-        alvirassa
-      </span>
+      {/* Wordmark + subtitle as a unified typographic mark */}
+      <div style={{ display: 'inline-block' }}>
+        <span style={{
+          fontFamily: "'IBM Plex Sans', sans-serif",
+          fontSize: size,
+          fontWeight: 400,
+          color: '#c8b87a',
+          letterSpacing: '0.16em',
+          display: 'block',
+          lineHeight: 1,
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+          alvirassa
+        </span>
+
+        {showSubtitle && (
+          <span style={{
+            display: 'block',
+            width: '100%',
+            fontFamily: "'IBM Plex Sans', sans-serif",
+            fontSize: '0.6rem',
+            fontWeight: 300,
+            color: 'rgba(200,184,122,0.45)',
+            letterSpacing: '0.02em',
+            marginTop: '0.45rem',
+            textAlign: 'justify',
+            textAlignLast: 'justify',
+            userSelect: 'none',
+            textTransform: 'uppercase',
+          }}>
+            cognitive intelligence system
+          </span>
+        )}
+      </div>
     </div>
   )
 }
