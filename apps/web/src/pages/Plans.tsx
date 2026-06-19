@@ -50,7 +50,7 @@ const plans = [
   },
   {
     name: 'Individual',
-    price: 'Early 2025',
+    price: 'Summer 2026',
     note: 'For independent analysts',
     features: [
       'Unlimited cases and observations',
@@ -67,7 +67,7 @@ const plans = [
   },
   {
     name: 'Team',
-    price: 'Early 2025',
+    price: 'Summer 2026',
     note: 'For collaborative investigations',
     features: [
       'Everything in Individual',
@@ -200,7 +200,7 @@ export function Plans() {
             ['Can I export my work?', 'Yes. Individual and Team plans support full case export in multiple formats.'],
             ['Is there a free trial of paid plans?', 'Contact us to arrange early access.'],
             ['Do you offer discounts for academic work?', 'Contact us with details about your research.'],
-            ['When will subscription plans launch?', 'Early 2025. We are finalizing infrastructure and running calibration tests.'],
+            ['When will subscription plans launch?', 'Summer 2026. We are finalizing infrastructure and running calibration tests.'],
           ].map(([q, a]) => (
             <div key={q}>
               <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.9rem', color: text, marginBottom: '0.5rem' }}>{q}</p>
