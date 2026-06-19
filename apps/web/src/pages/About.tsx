@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom'
 import { AlvirassaLogo } from '../components/AlvirassaLogo'
 
-const accent   = 'var(--accent)'
-const muted    = 'var(--text-muted)'
-const dim      = 'var(--text-dim)'
-const surface  = 'var(--surface)'
-const border   = 'var(--border)'
-const text     = 'var(--text)'
+const accent = 'var(--accent)'
+const muted = 'var(--text-muted)'
+const dim = 'var(--text-dim)'
+const border = 'var(--border)'
 
 function SectionLabel({ children }: { children: string }) {
   return (
