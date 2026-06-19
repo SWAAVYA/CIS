@@ -29,11 +29,10 @@ export function SiteNav() {
         </span>
         <span style={{
           fontFamily: "'IBM Plex Sans', sans-serif",
-          fontSize: '0.55rem',
+          fontSize: '0.6rem',
           fontWeight: 300,
           color: 'rgba(200,184,122,0.4)',
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
         }}>
           cognitive intelligence system
         </span>
