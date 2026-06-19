@@ -16,10 +16,6 @@ export function SiteFooter() {
       <Link to="/terms" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
         privacy policy
       </Link>
-      <span style={{ color: 'var(--border2)', fontSize: '0.6rem' }}>·</span>
-      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>
-        © 2026 alvissara
-      </span>
     </footer>
   )
 }

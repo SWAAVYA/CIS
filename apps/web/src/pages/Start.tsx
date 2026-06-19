@@ -57,10 +57,10 @@ export function Start() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '4rem 2rem',
+        padding: '5rem 1.5rem 4rem',
       }}>
         <div style={{ width: '100%', maxWidth: 340 }}>
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.85, marginBottom: '2rem', letterSpacing: '0.01em' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.9, marginBottom: '2.5rem', letterSpacing: '0.01em' }}>
             Submit observations. Preserve what remains unexplained. Connect residuals across domains.
           </p>
 
