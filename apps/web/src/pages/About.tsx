@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { AlvirassaLogo } from '../components/AlvirassaLogo'
+import { SiteNav } from '../components/SiteNav'
+import { SiteFooter } from '../components/SiteFooter'
 
 const accent = 'var(--accent)'
 const muted = 'var(--text-muted)'
@@ -29,24 +31,15 @@ function Divider() {
 export function About() {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {/* Nav */}
-      <div style={{ borderBottom: `1px solid ${border}`, padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <AlvirassaLogo size="1.4rem" />
-        </Link>
-        <div style={{ display: 'flex', gap: '1.5rem' }}>
-          <Link to="/research" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none', letterSpacing: '0.1em' }}>research</Link>
-          <Link to="/plans" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none', letterSpacing: '0.1em' }}>plans</Link>
-        </div>
-      </div>
+      <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '4rem 2rem 6rem' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
         {/* Hero */}
         <div style={{ marginBottom: '3.5rem' }}>
-          <AlvirassaLogo size="2.8rem" />
-          <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.82rem', color: muted, marginTop: '1rem', letterSpacing: '0.05em' }}>
-            cognitive intelligence system
+          <AlvirassaLogo size="2.8rem" showSubtitle />
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.78rem', color: muted, lineHeight: 1.8, marginTop: '2rem', maxWidth: 480 }}>
+            Structural observation system for residuals that survive all known explanations.
           </p>
           <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8, marginTop: '1.5rem', maxWidth: 500 }}>
             Structural observation system for residuals that survive all known explanations.
@@ -117,13 +110,8 @@ export function About() {
           Nothing is discarded. The archive is the product. The system is built for the cases where you have not yet found the answer.
         </p>
 
-        <div style={{ marginTop: '4rem', paddingTop: '1.5rem', borderTop: `1px solid ${border}`, display: 'flex', gap: '1.5rem' }}>
-          <Link to="/" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>home</Link>
-          <Link to="/research" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>research</Link>
-          <Link to="/plans" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>plans</Link>
-        </div>
-
       </div>
+      <SiteFooter />
     </div>
   )
 }

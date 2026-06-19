@@ -12,6 +12,7 @@ import { Analytics } from './pages/Analytics'
 import { About } from './pages/About'
 import { Research } from './pages/Research'
 import { Plans } from './pages/Plans'
+import { Terms } from './pages/Terms'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useCase } from './hooks/useCase'
 
@@ -118,6 +119,7 @@ export function App() {
       <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
       <Route path="/research" element={<ErrorBoundary><Research /></ErrorBoundary>} />
       <Route path="/plans" element={<ErrorBoundary><Plans /></ErrorBoundary>} />
+      <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
       <Route path="/cases/:id/*" element={<CaseLayout />} />
     </Routes>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { AlvirassaLogo } from '../components/AlvirassaLogo'
+import { SiteNav } from '../components/SiteNav'
+import { SiteFooter } from '../components/SiteFooter'
 
 const accent   = 'var(--accent)'
 const muted    = 'var(--text-muted)'
@@ -121,29 +121,14 @@ export function Plans() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {/* Nav */}
-      <div style={{ borderBottom: `1px solid ${border}`, padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <AlvirassaLogo size="1.4rem" />
-        </Link>
-        <div style={{ display: 'flex', gap: '1.5rem' }}>
-          <Link to="/about" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none', letterSpacing: '0.1em' }}>about</Link>
-          <Link to="/research" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none', letterSpacing: '0.1em' }}>research</Link>
-        </div>
-      </div>
+      <SiteNav />
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '4rem 2rem 6rem' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
-        {/* Hero */}
-        <div style={{ marginBottom: '3.5rem' }}>
-          <AlvirassaLogo size="2.8rem" />
-          <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.82rem', color: muted, marginTop: '1rem', letterSpacing: '0.05em' }}>
-            cognitive intelligence system
-          </p>
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8, marginTop: '1.5rem' }}>
-            Choose the plan that fits your investigation. All features are built for serious analytical work.
-          </p>
-        </div>
+        <h1 style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '1.6rem', color: accent, fontWeight: 400, marginBottom: '0.6rem' }}>Plans</h1>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.78rem', color: muted, lineHeight: 1.8, marginBottom: '3rem' }}>
+          Choose the plan that fits your investigation.
+        </p>
 
         {/* Plan cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
@@ -286,13 +271,8 @@ export function Plans() {
           )}
         </div>
 
-        <div style={{ marginTop: '4rem', paddingTop: '1.5rem', borderTop: `1px solid ${border}`, display: 'flex', gap: '1.5rem' }}>
-          <Link to="/" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>home</Link>
-          <Link to="/about" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>about</Link>
-          <Link to="/research" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: dim, textDecoration: 'none' }}>research</Link>
-        </div>
-
       </div>
+      <SiteFooter />
     </div>
   )
 }
