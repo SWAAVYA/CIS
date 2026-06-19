@@ -4,7 +4,6 @@ import { SiteFooter } from '../components/SiteFooter'
 
 const accent = 'var(--accent)'
 const muted = 'var(--text-muted)'
-const dim = 'var(--text-dim)'
 const border = 'var(--border)'
 const text = 'var(--text)'
 
