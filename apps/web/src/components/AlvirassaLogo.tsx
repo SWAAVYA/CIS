@@ -56,15 +56,12 @@ export function AlvirassaLogo({ className, style, size = '2rem', showSubtitle = 
             display: 'block',
             width: '100%',
             fontFamily: "'IBM Plex Sans', sans-serif",
-            fontSize: '0.6rem',
+            fontSize: '0.7rem',
             fontWeight: 300,
             color: 'rgba(200,184,122,0.45)',
-            letterSpacing: '0.02em',
-            marginTop: '0.45rem',
-            textAlign: 'justify',
-            textAlignLast: 'justify',
+            letterSpacing: '0.08em',
+            marginTop: '0.5rem',
             userSelect: 'none',
-            textTransform: 'uppercase',
           }}>
             cognitive intelligence system
           </span>
