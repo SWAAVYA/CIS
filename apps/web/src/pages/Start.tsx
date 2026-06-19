@@ -60,6 +60,9 @@ export function Start() {
         padding: '4rem 2rem',
       }}>
         <div style={{ width: '100%', maxWidth: 340 }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.85, marginBottom: '2rem', letterSpacing: '0.01em' }}>
+            Submit observations. Preserve what remains unexplained. Connect residuals across domains.
+          </p>
 
           {error && (
             <div style={{ marginBottom: '1rem', padding: '0.6rem 0.8rem', fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', color: 'var(--red)', background: '#7a303022', border: '1px solid var(--red-dim)', borderRadius: 3 }}>
