@@ -61,7 +61,7 @@ export function About() {
 
         <SectionLabel>How it works</SectionLabel>
         <Divider />
-        <ul style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem', paddingLeft: '1.5rem', listStyleType: 'decimal' }}>
+        <ol style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem', paddingLeft: '1.5rem' }}>
           {[
             'Submit an observation because its behavior does not match what its context predicts.',
             'The system evaluates it across four structural dimensions: Rate, Direction, Relationship, Configuration.',
@@ -74,15 +74,15 @@ export function About() {
           ].map((item) => (
             <li key={item} style={{ marginBottom: '0.6rem' }}>{item}</li>
           ))}
-        </ul>
+        </ol>
 
         <SectionLabel>For whom</SectionLabel>
         <Divider />
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text, fontWeight: 500 }}>Investigators</span> — Building the picture incrementally from structural anomalies rather than starting from a hypothesis.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text, fontWeight: 500 }}>Researchers</span> — Working with results that existing models acknowledge but cannot adequately explain.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text, fontWeight: 500 }}>Analysts</span> — Examining systems whose behavior emerges across multiple domains.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text, fontWeight: 500 }}>Cold case work</span> — Observations that remain unresolved for years. Continuity matters more than speed.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem' }}><span style={{ color: text, fontWeight: 500 }}>Anyone</span> — Who collects residuals: observations that have survived the known explanations and still demand investigation.</p>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Investigators.</span> Building the picture incrementally from structural anomalies rather than starting from a hypothesis.</p>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Researchers.</span> Working with results that existing models acknowledge but cannot adequately explain.</p>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Analysts.</span> Examining systems whose behavior emerges across multiple domains.</p>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Cold case work.</span> Observations that remain unresolved for years. Continuity matters more than speed.</p>
+        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem' }}><span style={{ color: text }}>Anyone.</span> Who collects residuals: observations that have survived the known explanations and still demand investigation.</p>
 
         <SectionLabel>Why it exists</SectionLabel>
         <Divider />
