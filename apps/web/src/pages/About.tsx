@@ -1,11 +1,9 @@
-import { Link } from 'react-router-dom'
 import { AlvirassaLogo } from '../components/AlvirassaLogo'
 import { SiteNav } from '../components/SiteNav'
 import { SiteFooter } from '../components/SiteFooter'
 
 const accent = 'var(--accent)'
 const muted = 'var(--text-muted)'
-const dim = 'var(--text-dim)'
 const border = 'var(--border)'
 
 function SectionLabel({ children }: { children: string }) {
