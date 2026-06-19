@@ -29,7 +29,7 @@ export function SiteNav() {
         </span>
         <span style={{
           fontFamily: "'IBM Plex Sans', sans-serif",
-          fontSize: '0.65rem',
+          fontSize: '0.72rem',
           fontWeight: 300,
           color: 'rgba(200,184,122,0.4)',
           letterSpacing: '0.1em',
