@@ -54,16 +54,14 @@ export function AlvirassaLogo({ className, style, size = '2rem', showSubtitle = 
         {showSubtitle && (
           <span style={{
             display: 'block',
-            width: size,
             fontFamily: "'IBM Plex Sans', sans-serif",
-            fontSize: '0.65rem',
+            fontSize: '0.72rem',
             fontWeight: 300,
             color: 'rgba(200,184,122,0.45)',
-            letterSpacing: '0.05em',
-            marginTop: '0.6rem',
-            textAlign: 'justify',
-            textAlignLast: 'justify',
+            letterSpacing: '0.15em',
+            marginTop: '0.4rem',
             userSelect: 'none',
+            whiteSpace: 'nowrap',
           }}>
             cognitive intelligence system
           </span>
