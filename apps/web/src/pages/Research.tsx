@@ -11,8 +11,7 @@ function SectionLabel({ children }: { children: string }) {
     <p style={{
       fontFamily: 'DM Mono, monospace',
       fontSize: '0.65rem',
-      letterSpacing: '0.2em',
-      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
       color: accent,
       marginBottom: '1.2rem',
       marginTop: '3rem',

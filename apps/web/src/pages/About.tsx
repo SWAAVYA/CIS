@@ -12,8 +12,7 @@ function SectionLabel({ children }: { children: string }) {
     <p style={{
       fontFamily: 'DM Mono, monospace',
       fontSize: '0.65rem',
-      letterSpacing: '0.2em',
-      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
       color: accent,
       marginBottom: '1.2rem',
       marginTop: '3rem',
@@ -88,7 +87,7 @@ export function About() {
           ['Anyone', 'Who collects residuals. observations that have survived the known explanations and still demand investigation.'],
         ].map(([role, desc], i) => (
           <div key={i} style={{ marginBottom: i === 4 ? '3rem' : '1.2rem' }}>
-            <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.4rem' }}>{role}</p>
+            <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', letterSpacing: '0.05em', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.4rem' }}>{role}</p>
             <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0, textAlign: 'justify' }}>{desc}</p>
           </div>
         ))}
