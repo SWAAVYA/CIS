@@ -71,17 +71,35 @@ export function About() {
           'Contradictions are preserved, tracked, and incorporated into future analysis.',
           'The Briefing presents the current state: which residuals remain open, which connections are established, which hypotheses are active.',
         ].map((item, i) => (
-          <p key={i} style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span> {item}</p>
+          <div key={i} style={{ marginBottom: '1.2rem', display: 'flex', gap: '0.8rem' }}>
+            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: accent, flexShrink: 0, marginTop: '0.2rem' }}>{String(i + 1).padStart(2, '0')}</span>
+            <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>{item}</p>
+          </div>
         ))}
-        <div style={{ marginBottom: '3rem' }} />
+        <div style={{ marginBottom: '2rem' }} />
 
         <SectionLabel>For whom</SectionLabel>
         <Divider />
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Investigators.</span> Building the picture incrementally from structural anomalies rather than starting from a hypothesis.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Researchers.</span> Working with results that existing models acknowledge but cannot adequately explain.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Analysts.</span> Examining systems whose behavior emerges across multiple domains.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: text }}>Cold case work.</span> Observations that remain unresolved for years. Continuity matters more than speed.</p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem' }}><span style={{ color: text }}>Anyone.</span> Who collects residuals: observations that have survived the known explanations and still demand investigation.</p>
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.3rem' }}>Investigators</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>Building the picture incrementally from structural anomalies rather than starting from a hypothesis.</p>
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.3rem' }}>Researchers</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>Working with results that existing models acknowledge but cannot adequately explain.</p>
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.3rem' }}>Analysts</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>Examining systems whose behavior emerges across multiple domains.</p>
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.3rem' }}>Cold case work</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>Observations that remain unresolved for years. Continuity matters more than speed.</p>
+        </div>
+        <div style={{ marginBottom: '3rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: text, lineHeight: 1.9, margin: 0, marginBottom: '0.3rem' }}>Anyone</p>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, margin: 0 }}>Who collects residuals: observations that have survived the known explanations and still demand investigation.</p>
+        </div>
 
         <SectionLabel>Why it exists</SectionLabel>
         <Divider />
