@@ -61,20 +61,19 @@ export function About() {
 
         <SectionLabel>How it works</SectionLabel>
         <Divider />
-        <ol style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '3rem', paddingLeft: '1.5rem' }}>
-          {[
-            'Submit an observation because its behavior does not match what its context predicts.',
-            'The system evaluates it across four structural dimensions: Rate, Direction, Relationship, Configuration.',
-            'Observations that meet admissibility requirements enter the open pool.',
-            'The system compares residuals across domains within the case.',
-            'Structural correspondences are measured against the probability of independent co-occurrence.',
-            'Where correspondence exceeds threshold, a hypothesis is generated.',
-            'Contradictions are preserved, tracked, and incorporated into future analysis.',
-            'The Briefing presents the current state: which residuals remain open, which connections are established, which hypotheses are active.',
-          ].map((item) => (
-            <li key={item} style={{ marginBottom: '0.6rem' }}>{item}</li>
-          ))}
-        </ol>
+        {[
+          'Submit an observation because its behavior does not match what its context predicts.',
+          'The system evaluates it across four structural dimensions: Rate, Direction, Relationship, Configuration.',
+          'Observations that meet admissibility requirements enter the open pool.',
+          'The system compares residuals across domains within the case.',
+          'Structural correspondences are measured against the probability of independent co-occurrence.',
+          'Where correspondence exceeds threshold, a hypothesis is generated.',
+          'Contradictions are preserved, tracked, and incorporated into future analysis.',
+          'The Briefing presents the current state: which residuals remain open, which connections are established, which hypotheses are active.',
+        ].map((item, i) => (
+          <p key={i} style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem' }}><span style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span> {item}</p>
+        ))}
+        <div style={{ marginBottom: '3rem' }} />
 
         <SectionLabel>For whom</SectionLabel>
         <Divider />
