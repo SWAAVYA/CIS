@@ -6,24 +6,41 @@ const accent = 'var(--accent)'
 const muted = 'var(--text-muted)'
 const border = 'var(--border)'
 
-function SectionLabel({ children }: { children: string }) {
+const body: React.CSSProperties = {
+  fontFamily: 'DM Mono, monospace',
+  fontSize: '0.8rem',
+  color: muted,
+  lineHeight: 1.9,
+  marginBottom: '0.75rem',
+}
+
+function H2({ children }: { children: string }) {
   return (
-    <p style={{
-      fontFamily: 'DM Mono, monospace',
-      fontSize: '0.65rem',
-      letterSpacing: '0.2em',
-      textTransform: 'uppercase',
+    <h2 style={{
+      fontFamily: 'Instrument Serif, Georgia, serif',
+      fontSize: '1.1rem',
       color: accent,
-      marginBottom: '1.2rem',
+      fontWeight: 400,
       marginTop: '3rem',
-    }}>
-      {children}
-    </p>
+      marginBottom: '0.4rem',
+    }}>{children}</h2>
   )
 }
 
-function Divider() {
-  return <div style={{ borderTop: `1px solid ${border}`, marginBottom: '1.5rem' }} />
+function Rule() {
+  return <div style={{ borderTop: `1px solid ${border}`, marginBottom: '1.4rem' }} />
+}
+
+function H3({ children }: { children: string }) {
+  return (
+    <p style={{
+      fontFamily: 'Instrument Serif, Georgia, serif',
+      fontSize: '0.9rem',
+      color: accent,
+      marginTop: '1.4rem',
+      marginBottom: '0.4rem',
+    }}>{children}</p>
+  )
 }
 
 export function About() {
@@ -31,82 +48,80 @@ export function About() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
-        {/* Hero */}
-        <div style={{ marginBottom: '3.5rem' }}>
-          <AlvirassaLogo size="2.8rem" showSubtitle />
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.78rem', color: muted, lineHeight: 1.8, marginTop: '2rem', maxWidth: 480 }}>
-            Structural observation system for residuals that survive all known explanations.
-          </p>
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.82rem', color: muted, lineHeight: 1.8, marginTop: '1.5rem', maxWidth: 500 }}>
-            Structural observation system for residuals that survive all known explanations.
-          </p>
+        <div style={{ marginBottom: '3rem' }}>
+          <AlvirassaLogo size="2.6rem" showSubtitle />
         </div>
 
-        {/* What it does */}
-        <SectionLabel>What it does</SectionLabel>
-        <Divider />
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85 }}>
-          alvirassa captures observations that deviate structurally from what their context predicts. These are not anomalies in the sense of noise or error. They are residuals — observations that remain after every known cause has been accounted for.
-        </p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85, marginTop: '0.9rem' }}>
-          The system stores these across independent domains and measures structural correspondence: do two residuals from completely separate fields show the same type of deviation, in the same direction, in the same observation period? When the answer is yes, and the probability of independent co-occurrence is below threshold, the system generates a hypothesis. That hypothesis identifies a hidden common variable that could explain both observations simultaneously.
-        </p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85, marginTop: '0.9rem' }}>
-          Nothing is discarded. Residuals accumulate. The system is built for cases where you do not yet know what you are looking for.
-        </p>
+        <p style={body}>Some observations refuse to go away.</p>
+        <p style={body}>A witness statement that does not fit the timeline. A disease pattern that appears in places that should have nothing in common. A financial signal that survives every conventional explanation. A recurring discrepancy that keeps returning no matter how many times it is dismissed as coincidence.</p>
+        <p style={body}>Most systems are built to explain observations. Few are built to preserve the ones that remain unexplained.</p>
+        <p style={body}>alvissara exists for those observations.</p>
 
-        {/* How it works */}
-        <SectionLabel>How it works</SectionLabel>
-        <Divider />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+        <H2>What It Is</H2>
+        <Rule />
+        <p style={body}>alvissara is a structural observation system for residuals that survive known explanations.</p>
+        <p style={body}>A residual is an observation that remains after the available causes, models, assumptions, and evidence have been exhausted.</p>
+        <p style={body}>These observations are often discarded as noise, error, coincidence, or incomplete information. Sometimes they are. Sometimes they are the first visible sign of something not yet understood.</p>
+        <p style={body}>alvissara is designed to keep them visible.</p>
+
+        <H2>What It Does</H2>
+        <Rule />
+        <p style={body}>The system records residuals across independent domains and examines whether they exhibit the same structural behaviour.</p>
+        <p style={body}>Two observations may appear unrelated on the surface. One may belong to ecology, another to finance. One may emerge from an investigation, another from a scientific study.</p>
+        <p style={body}>What matters is not the subject. It is the structure.</p>
+        <p style={body}>When residuals display the same pattern of deviation across independent domains, the system measures whether that correspondence is likely to have occurred by chance.</p>
+        <p style={body}>Where correspondence persists beyond threshold, alvissara generates a hypothesis describing a possible hidden common cause.</p>
+        <p style={body}>The purpose is not to prove the hypothesis.</p>
+        <p style={body}>The purpose is to identify where investigation should begin.</p>
+
+        <H2>How It Works</H2>
+        <Rule />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           {[
-            'Submit an observation: something structurally incongruent with its context.',
-            'The system scores it across four dimensions: Rate, Direction, Relationship, Configuration.',
-            'Observations that exceed threshold are admitted to the open pool.',
-            'The system compares admitted observations across domains within the case.',
-            'When two observations from independent domains show correspondence exceeding the probability of independent co-occurrence, a hypothesis is generated.',
-            'Contradictions are flagged where observations conflict with each other.',
-            'The Briefing synthesizes the current state: which residuals remain open, which connections are established, which hypotheses are active.',
+            'An observation is submitted because its behaviour does not match what its context predicts.',
+            'The observation is evaluated across structural dimensions including rate, direction, relationship, and configuration.',
+            'Residuals that satisfy admissibility requirements enter the observation pool.',
+            'The system compares residuals across domains.',
+            'Structural correspondences are measured against the probability of independent co-occurrence.',
+            'Where correspondence exceeds threshold, a hypothesis is generated.',
+            'Contradictions are preserved, tracked, and incorporated into future analysis.',
+            'The Briefing presents the current state of investigation, including active residuals, established correspondences, unresolved contradictions, and active hypotheses.',
           ].map((step, i) => (
-            <div key={i} style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', color: accent, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.78rem', color: muted, lineHeight: 1.75 }}>{step}</span>
+            <div key={i} style={{ display: 'flex', gap: '0.9rem', alignItems: 'flex-start' }}>
+              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', color: accent, flexShrink: 0, marginTop: 2 }}>{i + 1}.</span>
+              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85 }}>{step}</span>
             </div>
           ))}
         </div>
 
-        {/* Who uses it */}
-        <SectionLabel>For whom</SectionLabel>
-        <Divider />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {[
-            ['Investigators', 'Building the picture incrementally from structural anomalies rather than starting from a hypothesis.'],
-            ['Researchers', 'Who notice observations at the edges of their data that their methodology does not explain.'],
-            ['Analysts', 'Working across domains where structural patterns may emerge from unrelated fields.'],
-            ['Cold case work', 'Where observations accumulate without current explanation and the system must hold them open indefinitely.'],
-            ['Anyone', 'Who collects residuals — observations that have survived the known explanations and still demand investigation.'],
-          ].map(([role, desc]) => (
-            <div key={role} style={{ display: 'flex', gap: '1.2rem', alignItems: 'baseline' }}>
-              <span style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.84rem', color: accent, minWidth: 130, flexShrink: 0 }}>{role}</span>
-              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.77rem', color: muted, lineHeight: 1.75 }}>{desc}</span>
-            </div>
-          ))}
-        </div>
+        <H2>For Whom</H2>
+        <Rule />
+        {[
+          ['Investigators', 'Building understanding from unexplained observations rather than beginning with a preferred conclusion.'],
+          ['Researchers', 'Working with results that existing models acknowledge but cannot adequately explain.'],
+          ['Analysts', 'Examining systems whose behaviour emerges across multiple domains.'],
+          ['Historical and Cold Case Work', 'Where observations remain unresolved for years and continuity matters more than speed.'],
+          ['Anyone Following a Persistent Question', 'Where the evidence remains incomplete, but the observation refuses to disappear.'],
+        ].map(([role, desc]) => (
+          <div key={role} style={{ marginBottom: '1.1rem' }}>
+            <H3>{role}</H3>
+            <p style={{ ...body, marginBottom: 0 }}>{desc}</p>
+          </div>
+        ))}
 
-        {/* Why it's different */}
-        <SectionLabel>Why it exists</SectionLabel>
-        <Divider />
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85 }}>
-          Conventional analysis starts with a hypothesis and searches for confirming evidence. Residual analysis starts with unexplained observations and searches for hidden common causes. This is not a refinement of conventional analysis. It is a different method operating on different principles.
-        </p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85, marginTop: '0.9rem' }}>
-          The system does not generate hypotheses on demand. It waits for cross-domain structural correspondence. This constraint eliminates low-probability speculation and focuses investigation on patterns that are unlikely to occur by chance across independent domains.
-        </p>
-        <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.85, marginTop: '0.9rem' }}>
-          Nothing is discarded. The archive is the product. The system is built for the cases where you have not yet found the answer.
-        </p>
+        <H2>Why It Exists</H2>
+        <Rule />
+        <p style={body}>Most investigative systems begin with a hypothesis and search for supporting evidence.</p>
+        <p style={body}>alvissara begins with the residual.</p>
+        <p style={body}>The observation comes first.</p>
+        <p style={body}>The explanation comes later.</p>
+        <p style={body}>This distinction changes what the system preserves.</p>
+        <p style={body}>Instead of discarding unresolved observations, it keeps them available for future correspondence, future evidence, and future understanding.</p>
+        <p style={body}>The archive is not a by-product of the system.</p>
+        <p style={body}>The archive is the system.</p>
+        <p style={{ ...body, marginBottom: 0 }}>Because sometimes the most important observation is the one that survives every explanation you currently possess.</p>
 
       </div>
       <SiteFooter />

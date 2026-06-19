@@ -25,14 +25,14 @@ export function SiteNav() {
           color: '#c8b87a',
           letterSpacing: '0.14em',
         }}>
-          alvirassa
+          alvissara
         </span>
         <span style={{
           fontFamily: "'IBM Plex Sans', sans-serif",
-          fontSize: '0.6rem',
+          fontSize: '0.65rem',
           fontWeight: 300,
           color: 'rgba(200,184,122,0.4)',
-          letterSpacing: '0.04em',
+          letterSpacing: '0.1em',
         }}>
           cognitive intelligence system
         </span>

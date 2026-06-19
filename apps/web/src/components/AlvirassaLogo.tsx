@@ -48,7 +48,7 @@ export function AlvirassaLogo({ className, style, size = '2rem', showSubtitle = 
           userSelect: 'none',
           whiteSpace: 'nowrap',
         }}>
-          alvirassa
+          alvissara
         </span>
 
         {showSubtitle && (

@@ -97,9 +97,9 @@ export function Plans() {
     if (!form.email.trim() || !form.message.trim()) return
     setStatus('sending')
     try {
-      const subject = encodeURIComponent(`alvirassa — message from ${form.name || form.email}`)
+      const subject = encodeURIComponent(`alvissara — message from ${form.name || form.email}`)
       const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)
-      window.location.href = `mailto:hello@alvirassa.com?subject=${subject}&body=${body}`
+      window.location.href = `mailto:hello@alvissara.com?subject=${subject}&body=${body}`
       setStatus('sent')
     } catch {
       setStatus('error')

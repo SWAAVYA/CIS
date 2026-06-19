@@ -6,10 +6,18 @@ const muted = 'var(--text-muted)'
 const dim = 'var(--text-dim)'
 const border = 'var(--border)'
 
+const body: React.CSSProperties = {
+  fontFamily: 'DM Mono, monospace',
+  fontSize: '0.8rem',
+  color: muted,
+  lineHeight: 1.9,
+  marginBottom: '1rem',
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '2.5rem' }}>
-      <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: accent, marginBottom: '1rem' }}>
+      <p style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '0.9rem', color: accent, marginBottom: '0.4rem', fontWeight: 400 }}>
         {title}
       </p>
       <div style={{ borderTop: `1px solid ${border}`, paddingTop: '1.2rem' }}>
@@ -19,20 +27,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-const body: React.CSSProperties = {
-  fontFamily: 'DM Mono, monospace',
-  fontSize: '0.78rem',
-  color: muted,
-  lineHeight: 1.85,
-}
-
-const h2: React.CSSProperties = {
-  fontFamily: 'Instrument Serif, Georgia, serif',
-  fontSize: '1.2rem',
-  color: accent,
-  fontWeight: 400,
-  marginBottom: '1.5rem',
-  marginTop: '3.5rem',
+function H2({ children }: { children: string }) {
+  return (
+    <h2 style={{
+      fontFamily: 'Instrument Serif, Georgia, serif',
+      fontSize: '1.1rem',
+      color: accent,
+      fontWeight: 400,
+      marginTop: '3rem',
+      marginBottom: '1.2rem',
+    }}>{children}</h2>
+  )
 }
 
 export function Terms() {
@@ -40,122 +45,87 @@ export function Terms() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <SiteNav />
 
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
         <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: dim, marginBottom: '0.6rem' }}>
           Last updated June 2026
         </p>
-        <h1 style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '1.6rem', color: accent, fontWeight: 400, marginBottom: '0.75rem', lineHeight: 1.2 }}>
+        <h1 style={{ fontFamily: 'Instrument Serif, Georgia, serif', fontSize: '1.6rem', color: accent, fontWeight: 400, marginBottom: '1.5rem', lineHeight: 1.2 }}>
           Terms &amp; Data
         </h1>
         <p style={{ ...body, marginBottom: '3rem' }}>
-          These terms govern your use of alvirassa. By using the service, you accept them.
+          These terms govern use of alvissara. By using the service, you accept them.
         </p>
 
-        {/* TERMS AND CONDITIONS */}
-        <h2 id="tc" style={h2}>Terms and Conditions</h2>
+        <H2>Terms and Conditions</H2>
 
-        <Section title="The service">
-          <p style={body}>
-            alvirassa is a structural observation system. You submit observations — descriptions of things that deviate structurally from what their context predicts — and the system scores, stores, and compares them across domains within your case.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            The service is provided as-is. We do not guarantee availability, completeness of analysis, or fitness for any particular investigative purpose. The system generates hypotheses based on structural correspondence; these are analytical outputs, not conclusions or professional advice of any kind.
-          </p>
+        <Section title="The Service">
+          <p style={body}>alvissara is a structural observation system.</p>
+          <p style={body}>Users submit observations: descriptions of things whose behaviour deviates structurally from what their context predicts. The system evaluates, stores, and compares observations across domains within a case.</p>
+          <p style={body}>The service generates hypotheses based on structural correspondence between observations. These hypotheses are analytical outputs intended to support investigation. They are not conclusions and should not be treated as legal, medical, financial, or professional advice.</p>
+          <p style={{ ...body, marginBottom: 0 }}>The service is provided as available. No guarantee is made regarding uninterrupted availability, completeness of analysis, or suitability for a particular investigative purpose.</p>
         </Section>
 
-        <Section title="Your use">
-          <p style={body}>
-            You are responsible for what you submit. You may not use alvirassa to process information you are not authorized to handle, to attempt to identify individuals without their consent, or for any purpose that is unlawful in your jurisdiction.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            Each case is controlled by its access code. You are responsible for keeping that code secure. We cannot recover access to a case if the code is lost.
-          </p>
+        <Section title="Your Use">
+          <p style={body}>You are responsible for the information submitted to the system.</p>
+          <p style={body}>alvissara may not be used to process information you are not authorised to handle, to identify individuals without lawful basis, or for purposes prohibited by applicable law.</p>
+          <p style={{ ...body, marginBottom: 0 }}>Each case is controlled through its access code. Responsibility for safeguarding that code rests with the holder. Cases cannot be recovered where access codes are lost.</p>
         </Section>
 
-        <Section title="Intellectual property">
-          <p style={body}>
-            The observations you submit remain yours. You grant us the right to store and process them to operate the service and, in aggregate and anonymized form, to improve the system. We do not claim ownership of your work.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            The alvirassa system — its frameworks, scoring methodology, hypothesis generation logic, and interface — is our intellectual property.
-          </p>
+        <Section title="Intellectual Property">
+          <p style={body}>Observations and materials submitted to a case remain the property of the person who submitted them.</p>
+          <p style={body}>You grant alvissara the right to store and process those observations for operation of the service and, in aggregated and anonymised form, for improvement of the underlying methodologies.</p>
+          <p style={body}>Ownership of submitted observations does not transfer to alvissara.</p>
+          <p style={{ ...body, marginBottom: 0 }}>The alvissara platform, methodologies, frameworks, scoring systems, hypothesis generation mechanisms, and associated intellectual property remain protected.</p>
         </Section>
 
-        <Section title="Limitation of liability">
-          <p style={body}>
-            alvirassa is a tool for structural observation. It does not provide legal, medical, financial, or professional advice. We are not liable for decisions made on the basis of hypotheses or outputs generated by the system.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            To the extent permitted by law, our liability for any claim arising from use of the service is limited to the amount you paid us in the three months preceding the claim.
-          </p>
+        <Section title="Limitation of Liability">
+          <p style={body}>alvissara is a tool for structural observation and investigation.</p>
+          <p style={body}>Responsibility for decisions, actions, conclusions, or outcomes derived from use of the service remains with the user.</p>
+          <p style={{ ...body, marginBottom: 0 }}>To the maximum extent permitted by law, liability arising from use of the service is limited to the amount paid for use of the service during the three months preceding the claim.</p>
         </Section>
 
-        <Section title="Changes and termination">
-          <p style={body}>
-            We may update these terms. Continued use after a change constitutes acceptance. We may suspend or discontinue the service with reasonable notice. If we discontinue, we will provide a way to export your case data for a period of at least 30 days.
-          </p>
+        <Section title="Changes and Continuity">
+          <p style={body}>These terms may be updated from time to time.</p>
+          <p style={body}>Continued use following publication of revised terms constitutes acceptance of those changes.</p>
+          <p style={{ ...body, marginBottom: 0 }}>Should the service be discontinued, a mechanism for exporting case data will remain available for a minimum period of thirty days.</p>
         </Section>
 
-        {/* PRIVACY POLICY */}
-        <h2 id="privacy" style={h2}>Privacy Policy</h2>
+        <H2>Privacy Policy</H2>
 
-        <Section title="What we collect">
-          <p style={body}>
-            When you create a case, we store the observations you submit. An observation is a structural signal — a text description of something that deviates from what its context predicts.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            We do not collect your name, email address, or any identifying information. Cases are created without an account. The only identifier associated with your case is the access code the system generates when you create it. There is no login, no profile, and no personal data attached to your work.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            We collect standard infrastructure logs (request timestamps, IP addresses, error traces). These are retained for up to 30 days for operational purposes and are not linked to case content.
-          </p>
+        <Section title="What Is Collected">
+          <p style={body}>When a case is created, alvissara stores the observations submitted to that case.</p>
+          <p style={body}>An observation is a description of a structural signal: something whose behaviour deviates from what its context predicts.</p>
+          <p style={body}>No names, email addresses, user accounts, profiles, or personal identifiers are required to create a case.</p>
+          <p style={body}>The only identifier associated with a case is the access code generated at creation.</p>
+          <p style={{ ...body, marginBottom: 0 }}>Standard infrastructure records, including request timestamps, IP addresses, and error logs, are retained for operational and security purposes for up to thirty days. These records are not linked to case content.</p>
         </Section>
 
-        <Section title="How we use it">
-          <p style={body}>
-            Observations are stored to run your case: scoring them, detecting connections across domains, generating hypotheses. That is the primary use.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            We use structural patterns from observations in aggregate to calibrate and improve the scoring system. This means we study the shapes of what people submit — the structural types, the dimensions that score high or low, the patterns that recur across cases — not the content of individual investigations. No case is read by a person. No observation is attributed to an individual.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            We do not sell data, share data with third parties for commercial purposes, or use observations for advertising of any kind.
-          </p>
+        <Section title="How Information Is Used">
+          <p style={body}>Observations are processed for the operation of the case, including scoring, correspondence analysis, contradiction tracking, and hypothesis generation.</p>
+          <p style={body}>Structural patterns may also be examined in aggregate to improve the underlying methodologies.</p>
+          <p style={body}>This analysis focuses on structural characteristics rather than investigative content. No case is attributed to an individual and no observation is used for advertising, profiling, or commercial targeting.</p>
+          <p style={body}>Observation data is not sold.</p>
+          <p style={{ ...body, marginBottom: 0 }}>Observation data is not shared with third parties for commercial purposes.</p>
         </Section>
 
-        <Section title="Your rights">
-          <p style={body}>
-            You can request deletion of a case and all its observations at any time by contacting us with your access code. We will remove the record entirely within 14 days.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            Because cases carry no personal identifier, we cannot fulfill data subject access requests by name or email — we can only act on requests that include the case access code. If you believe we hold personal data about you outside of a case record, contact us and we will investigate.
-          </p>
+        <Section title="Your Rights">
+          <p style={body}>A case and its observations may be deleted by submitting a request together with the relevant access code.</p>
+          <p style={body}>Deletion requests are completed within fourteen days.</p>
+          <p style={{ ...body, marginBottom: 0 }}>Because cases are not associated with names, email addresses, or accounts, requests can only be processed through possession of the case access code.</p>
         </Section>
 
-        <Section title="Third parties">
-          <p style={body}>
-            Observation processing uses the Anthropic API (Claude) for document extraction, scoring, and hypothesis generation. Observation text is sent to Anthropic's API as part of this processing. Anthropic does not use API-submitted content for training by default. Their privacy policy applies to that processing.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            The application is hosted on Vercel. Infrastructure-level data (logs, request metadata) is subject to Vercel's privacy policy.
-          </p>
-          <p style={{ ...body, marginTop: '0.9rem' }}>
-            We do not use analytics trackers, advertising pixels, or third-party cookies.
-          </p>
+        <Section title="Third Parties">
+          <p style={body}>Observation processing uses the Anthropic API for extraction, scoring, and hypothesis generation.</p>
+          <p style={body}>Observation content submitted for processing is transmitted to Anthropic as part of that process. Anthropic's terms and privacy practices apply to such processing.</p>
+          <p style={body}>Infrastructure services are provided through Vercel. Infrastructure-level records are therefore subject to Vercel's applicable policies.</p>
+          <p style={{ ...body, marginBottom: 0 }}>No analytics trackers, advertising networks, advertising pixels, or third-party cookies are used.</p>
         </Section>
 
-        <Section title="Research use">
-          <p style={body}>
-            alvirassa is built on theoretical frameworks under active development. Aggregated structural patterns observed across cases inform that research. Concretely: we study how observations score across dimensions, what types of structural correspondence emerge across domains, and how hypotheses hold or collapse as cases develop. This is research into the method. The content of individual cases is not used.
-          </p>
-        </Section>
-
-        <Section title="Contact">
-          <p style={body}>
-            Questions about data, deletion requests, or anything else:{' '}
-            <a href="mailto:hello@alvirassa.com" style={{ color: accent, textDecoration: 'none' }}>hello@alvirassa.com</a>
-          </p>
+        <Section title="Research">
+          <p style={body}>alvissara is built upon a body of theoretical work that continues to be tested and refined.</p>
+          <p style={body}>Aggregated structural patterns contribute to that research. This includes the study of scoring behaviour, correspondence formation, contradiction persistence, and hypothesis performance across cases.</p>
+          <p style={{ ...body, marginBottom: 0 }}>The research concerns the method. The content of individual investigations is not used.</p>
         </Section>
 
       </div>

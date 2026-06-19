@@ -9,16 +9,16 @@ export function SiteFooter() {
       background: 'var(--bg)',
       borderTop: '1px solid var(--border)',
     }}>
-      <Link to="/terms#tc" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
+      <Link to="/terms" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
         terms &amp; conditions
       </Link>
       <span style={{ color: 'var(--border2)', fontSize: '0.6rem' }}>·</span>
-      <Link to="/terms#privacy" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
+      <Link to="/terms" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
         privacy policy
       </Link>
       <span style={{ color: 'var(--border2)', fontSize: '0.6rem' }}>·</span>
       <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>
-        © 2026 alvirassa
+        © 2026 alvissara
       </span>
     </footer>
   )
