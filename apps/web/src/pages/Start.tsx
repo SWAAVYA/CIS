@@ -110,6 +110,8 @@ export function Start() {
           <Link to="/about" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>about</Link>
           <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
           <Link to="/research" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>research</Link>
+          <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
+          <Link to="/plans" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>plans</Link>
         </div>
       </div>
     </div>

@@ -127,6 +127,8 @@ export function Research() {
           <Link to="/" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>home</Link>
           <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
           <Link to="/about" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>about</Link>
+          <span style={{ color: 'var(--border2)' }} className="text-xs">·</span>
+          <Link to="/plans" className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>plans</Link>
         </div>
 
       </div>
