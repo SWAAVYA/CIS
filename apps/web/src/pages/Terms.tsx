@@ -53,7 +53,7 @@ export function Terms() {
         </p>
 
         {/* TERMS AND CONDITIONS */}
-        <h2 style={h2}>Terms and Conditions</h2>
+        <h2 id="tc" style={h2}>Terms and Conditions</h2>
 
         <Section title="The service">
           <p style={body}>
@@ -98,7 +98,7 @@ export function Terms() {
         </Section>
 
         {/* PRIVACY POLICY */}
-        <h2 style={h2}>Privacy Policy</h2>
+        <h2 id="privacy" style={h2}>Privacy Policy</h2>
 
         <Section title="What we collect">
           <p style={body}>
