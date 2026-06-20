@@ -38,8 +38,7 @@ body {
   font-family: 'IBM Plex Sans', sans-serif;
 }
 
-.justify-desktop { text-align: left; }
-@media (min-width: 640px) { .justify-desktop { text-align: justify !important; } }
+.justify-desktop { text-align: justify !important; }
 
 * {
   box-sizing: border-box;
