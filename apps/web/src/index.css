@@ -39,7 +39,7 @@ body {
 }
 
 .justify-desktop { text-align: left; }
-@media (min-width: 640px) { .justify-desktop { text-align: justify; } }
+@media (min-width: 640px) { .justify-desktop { text-align: justify !important; } }
 
 * {
   box-sizing: border-box;
