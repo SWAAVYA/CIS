@@ -30,7 +30,8 @@ export function Research() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
+      <style>{`#research-content p { text-align: justify !important; }`}</style>
+      <div id="research-content" style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
         <h1 style={{ fontFamily: 'DM Mono, monospace', fontSize: '1rem', color: accent, fontWeight: 400, marginBottom: '0.6rem', letterSpacing: '0.1em' }}>research</h1>
         <p className="justify-desktop" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.8rem', color: muted, lineHeight: 1.9, marginBottom: '0.8rem', } }>The observation system is built on three independent theoretical frameworks developed to address a common problem: how to identify important signals before conventional methods recognise them, how to understand large transitions while they are happening, and how to discover connections that remain invisible when domains are studied in isolation.</p>

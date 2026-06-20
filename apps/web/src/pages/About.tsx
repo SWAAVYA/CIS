@@ -31,7 +31,8 @@ export function About() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       <SiteNav />
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
+      <style>{`#about-content p { text-align: justify !important; }`}</style>
+      <div id="about-content" style={{ maxWidth: 680, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
 
         <div style={{ marginBottom: '3rem' }}>
           <AlvirassaLogo size="2rem" showSubtitle />
