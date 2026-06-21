@@ -60,7 +60,7 @@ export function Start() {
         padding: '5rem 1.5rem 4rem',
       }}>
         <div style={{ width: '100%', maxWidth: 340 }}>
-          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'rgba(200,184,122,0.45)', letterSpacing: '0.15em', marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.85rem', color: 'rgba(200,184,122,0.45)', letterSpacing: '0.08em', marginBottom: '1rem' }}>
             cognitive intelligence system
           </p>
           <p style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.9, marginBottom: '2.5rem', letterSpacing: '0.01em' }}>
