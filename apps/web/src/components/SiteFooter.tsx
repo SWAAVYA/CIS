@@ -9,7 +9,7 @@ export function SiteFooter() {
       background: 'var(--bg)',
       borderTop: '1px solid var(--border)',
     }}>
-      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>© 2026 alvissara</span>
+      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', letterSpacing: '0.06em' }}>alvissara © 2026</span>
       <span style={{ color: 'var(--border2)', fontSize: '0.6rem' }}>·</span>
       <Link to="/terms" style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.6rem', color: 'var(--text-dim)', textDecoration: 'none', letterSpacing: '0.06em' }}>
         terms &amp; conditions
