@@ -10,6 +10,7 @@
 
 import crypto from 'crypto';
 import type { Prisma } from '@prisma/client';
+import { computeLogicDigest } from './admission-decision.js';
 
 // ─── Stable serialization ─────────────────────────────────────────────────
 // Matches DEL core/stable-json.ts exactly so any cross-system hash comparison
@@ -245,19 +246,24 @@ export async function sealAdmission(
     constraintVersion: params.constraintVersion,
   });
 
-  // The payload that gets hashed — everything that constitutes the sealed decision
+  const logicDigest = computeLogicDigest();
+
+  // The payload that gets hashed — everything that constitutes the sealed decision.
+  // logic_digest is included so replay can verify the decision semantics in force.
+  // NOTE: once this field set is in production, the keys and their order are frozen.
   const sealPayload = {
-    signal_id: params.signalId,
-    case_id: params.caseId,
-    decision: params.decision,
-    si_score: params.siScore,
-    si_threshold: params.siThreshold,
-    significance: params.significance,
-    sig_threshold: params.sigThreshold,
-    dim_threshold: params.dimThreshold,
+    signal_id:          params.signalId,
+    case_id:            params.caseId,
+    decision:           params.decision,
+    si_score:           params.siScore,
+    si_threshold:       params.siThreshold,
+    significance:       params.significance,
+    sig_threshold:      params.sigThreshold,
+    dim_threshold:      params.dimThreshold,
     constraint_version: params.constraintVersion,
-    input_hash: inputHash,
-    decision_trace: decisionTrace,
+    input_hash:         inputHash,
+    decision_trace:     decisionTrace,
+    logic_digest:       logicDigest,
   };
 
   const currentHash = computeSealHash(sealPayload, prevHash);
@@ -268,7 +274,7 @@ export async function sealAdmission(
       si_score, si_threshold, significance, sig_threshold, dim_threshold,
       constraint_version, rtt_theory_version,
       signal_content, si_rate, si_direction, si_relationship, si_configuration,
-      input_hash, decision_trace,
+      input_hash, decision_trace, logic_digest,
       prev_hash, current_hash
     ) VALUES (
       ${params.signalId}::uuid,
@@ -288,6 +294,7 @@ export async function sealAdmission(
       ${params.siConfiguration},
       ${inputHash},
       ${JSON.stringify(decisionTrace)}::jsonb,
+      ${logicDigest},
       ${prevHash},
       ${currentHash}
     )

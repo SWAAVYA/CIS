@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",

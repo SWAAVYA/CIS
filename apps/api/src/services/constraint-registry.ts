@@ -24,8 +24,9 @@ export interface ConstraintSet {
   readonly SIG_THRESHOLD: number;
   readonly SI_DIM_THRESHOLD: number;
 
-  // SHG connection threshold
+  // SHG connection thresholds
   readonly SHG_CORR_THRESHOLD: number;
+  readonly SHG_INDEPENDENCE_THRESHOLD: number;
 }
 
 function digestConstraints(values: {
@@ -33,6 +34,7 @@ function digestConstraints(values: {
   SIG_THRESHOLD: number;
   SI_DIM_THRESHOLD: number;
   SHG_CORR_THRESHOLD: number;
+  SHG_INDEPENDENCE_THRESHOLD: number;
 }): string {
   return crypto.createHash('sha256').update(stableSerialize(values)).digest('hex');
 }
@@ -42,6 +44,7 @@ function buildConstraintSet(values: {
   SIG_THRESHOLD: number;
   SI_DIM_THRESHOLD: number;
   SHG_CORR_THRESHOLD: number;
+  SHG_INDEPENDENCE_THRESHOLD: number;
 }): ConstraintSet {
   const digest = digestConstraints(values);
   // Version = first 12 chars of digest — short enough to embed in audit records,
@@ -62,10 +65,11 @@ function buildConstraintSet(values: {
  * will differ, recording that a different constraint version was active.
  */
 export const ACTIVE_CONSTRAINTS: ConstraintSet = buildConstraintSet({
-  SI_MIN_THRESHOLD: parseFloat(process.env.SI_MIN_THRESHOLD ?? '0.25'),
-  SIG_THRESHOLD:    parseFloat(process.env.SIG_THRESHOLD    ?? '0.55'),
-  SI_DIM_THRESHOLD: parseFloat(process.env.SI_DIM_THRESHOLD ?? '0.35'),
-  SHG_CORR_THRESHOLD: parseFloat(process.env.SHG_CORR_THRESHOLD ?? '0.35'),
+  SI_MIN_THRESHOLD:          parseFloat(process.env.SI_MIN_THRESHOLD          ?? '0.25'),
+  SIG_THRESHOLD:             parseFloat(process.env.SIG_THRESHOLD             ?? '0.55'),
+  SI_DIM_THRESHOLD:          parseFloat(process.env.SI_DIM_THRESHOLD          ?? '0.35'),
+  SHG_CORR_THRESHOLD:        parseFloat(process.env.SHG_CORR_THRESHOLD        ?? '0.35'),
+  SHG_INDEPENDENCE_THRESHOLD: parseFloat(process.env.SHG_INDEPENDENCE_THRESHOLD ?? '0.15'),
 });
 
 /**
@@ -89,12 +93,14 @@ export function verifyConstraintDigest(stored: {
   SIG_THRESHOLD: number;
   SI_DIM_THRESHOLD: number;
   SHG_CORR_THRESHOLD: number;
+  SHG_INDEPENDENCE_THRESHOLD: number;
 }): boolean {
   const expected = digestConstraints({
-    SI_MIN_THRESHOLD: stored.SI_MIN_THRESHOLD,
-    SIG_THRESHOLD:    stored.SIG_THRESHOLD,
-    SI_DIM_THRESHOLD: stored.SI_DIM_THRESHOLD,
-    SHG_CORR_THRESHOLD: stored.SHG_CORR_THRESHOLD,
+    SI_MIN_THRESHOLD:           stored.SI_MIN_THRESHOLD,
+    SIG_THRESHOLD:              stored.SIG_THRESHOLD,
+    SI_DIM_THRESHOLD:           stored.SI_DIM_THRESHOLD,
+    SHG_CORR_THRESHOLD:         stored.SHG_CORR_THRESHOLD,
+    SHG_INDEPENDENCE_THRESHOLD: stored.SHG_INDEPENDENCE_THRESHOLD,
   });
   return expected === stored.digest;
 }

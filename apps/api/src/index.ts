@@ -17,6 +17,7 @@ import auditRouter from './routes/audit.js';
 import residualsRouter from './routes/residuals.js';
 import populationRouter from './routes/population.js';
 import { startJobs } from './jobs/index.js';
+import { runStartupValidation, requireValidActivation, getGateState } from './services/admission-gate.js';
 
 const required = ['DATABASE_URL'];
 const missing = required.filter(key => !process.env[key]);
@@ -53,10 +54,24 @@ app.post('/api/cases/:id/signals', signalsLimiter);
 app.use('/api/cases/:id/intake', intakeLimiter);
 app.get('/api/analytics', analyticsLimiter);
 
+// Admission gate — blocks signal submission and intake routes until startup
+// validation confirms the sealed activation matches the running env + code.
+// Audit and read routes are unaffected.
+app.post('/api/cases/:id/signals', requireValidActivation);
+app.use('/api/cases/:id/intake', requireValidActivation);
+
 app.get('/health', async (_req, res) => {
   try {
     await prisma.$executeRaw`SELECT 1`;
-    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+    const gate = getGateState();
+    const healthy = gate.status === 'VALID';
+    res.status(healthy ? 200 : 503).json({
+      status:    healthy ? 'ok' : 'degraded',
+      db:        'connected',
+      admission: gate.status,
+      ...(gate.reason ? { admission_reason: gate.reason } : {}),
+      timestamp: new Date().toISOString(),
+    });
   } catch (err) {
     console.error('[health] DB check failed:', err);
     res.status(503).json({ status: 'error', db: 'disconnected', error: String(err), timestamp: new Date().toISOString() });
@@ -92,7 +107,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 const server = app.listen(PORT, () => {
   console.log(`CIS API listening on port ${PORT}`);
-  if (process.env.NODE_ENV !== 'test') startJobs();
+  if (process.env.NODE_ENV !== 'test') {
+    startJobs();
+    runStartupValidation().catch(err => {
+      console.error('[admission-gate] Startup validation threw unexpectedly:', err);
+    });
+  }
 });
 
 process.on('SIGTERM', async () => {

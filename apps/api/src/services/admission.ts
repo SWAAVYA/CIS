@@ -15,6 +15,7 @@
 import type { Prisma } from '@prisma/client';
 import { sealAdmission, type SealResult } from './audit-chain.js';
 import { ACTIVE_CONSTRAINTS, RTT_THEORY_VERSION } from './constraint-registry.js';
+import { decideAdmission } from './admission-decision.js';
 import {
   getOrCreateCisFrameEntity,
   getOrCreateCaseFrameEntity,
@@ -56,11 +57,13 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
     version: constraintVersion,
   } = ACTIVE_CONSTRAINTS;
 
-  const passesWeighted  = siScore >= SI_MIN_THRESHOLD;
-  const passesDimension = siMaxDimension >= SI_DIM_THRESHOLD;
+  const { decision, meetsSignificance } = decideAdmission(
+    { siScore, siMaxDimension, significance },
+    { SI_MIN_THRESHOLD, SIG_THRESHOLD, SI_DIM_THRESHOLD },
+  );
 
   // ── Reject ──────────────────────────────────────────────────────────────
-  if (!passesWeighted && !passesDimension) {
+  if (decision === 'REJECTED') {
     const reason =
       `SI score ${siScore} below SI_min ${SI_MIN_THRESHOLD} ` +
       `and max dimension ${siMaxDimension} below ${SI_DIM_THRESHOLD}`;
@@ -108,8 +111,6 @@ export async function runAdmission(params: AdmissionParams): Promise<AdmissionRe
   }
 
   // ── Admit ────────────────────────────────────────────────────────────────
-  const meetsSignificance = significance >= SIG_THRESHOLD;
-  const decision = meetsSignificance ? 'ADMITTED' : 'SUB_THRESHOLD_RETAINED';
   const reason = meetsSignificance
     ? `SI score ${siScore} above SI_min ${SI_MIN_THRESHOLD}. ` +
       `Significance ${significance} above threshold ${SIG_THRESHOLD}.`

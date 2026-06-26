@@ -1,7 +1,5 @@
 import prisma from '../prisma.js';
-
-const SHG_CORR_THRESHOLD = parseFloat(process.env.SHG_CORR_THRESHOLD ?? '0.35');
-const SHG_INDEPENDENCE_THRESHOLD = parseFloat(process.env.SHG_INDEPENDENCE_THRESHOLD ?? '0.15');
+import { ACTIVE_CONSTRAINTS } from './constraint-registry.js';
 
 export async function generateHypothesis(
   connectionId: string
@@ -64,7 +62,7 @@ export async function generateHypothesis(
       pIndependent = 1.0 - Number(connection.correspondence_strength);
     }
 
-    if (pIndependent >= SHG_INDEPENDENCE_THRESHOLD) {
+    if (pIndependent >= ACTIVE_CONSTRAINTS.SHG_INDEPENDENCE_THRESHOLD) {
       return null;
     }
 
@@ -178,7 +176,7 @@ export async function checkConnections(signalId: string): Promise<void> {
 
     // Compute correspondence strength
     const strength = computeCorrespondenceStrength(signal, candidate);
-    if (strength < SHG_CORR_THRESHOLD) continue;
+    if (strength < ACTIVE_CONSTRAINTS.SHG_CORR_THRESHOLD) continue;
 
     // Ensure ordering (signal_a_id < signal_b_id)
     const [ordA, ordB] = signal.id < candidate.id

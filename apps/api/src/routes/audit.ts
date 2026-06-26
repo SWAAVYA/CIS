@@ -21,20 +21,34 @@ import {
   GENESIS_PREV_HASH, buildDecisionTrace,
 } from '../services/audit-chain.js';
 import { ACTIVE_CONSTRAINTS, verifyConstraintDigest } from '../services/constraint-registry.js';
+import { decideAdmission } from '../services/admission-decision.js';
+import {
+  sealConstraintActivation,
+  listActivations,
+  buildActivationPayload,
+  type SignedActivation,
+} from '../services/constraint-activation.js';
+import { getGateState } from '../services/admission-gate.js';
 import { getCaseFrameState, assessRState, recomputeCaseFrameState } from '../services/frame-graph.js';
+import { anchorActivationInDEL, fetchDELAnchorForHash } from '../services/del-anchor.js';
 
 const router = Router();
 
 // ── GET /api/audit/constraints/active ─────────────────────────────────────
 router.get('/constraints/active', (_req, res) => {
+  const gate = getGateState();
   res.json({
-    version:         ACTIVE_CONSTRAINTS.version,
-    digest:          ACTIVE_CONSTRAINTS.digest,
-    activated_at:    ACTIVE_CONSTRAINTS.activatedAt,
-    SI_MIN_THRESHOLD: ACTIVE_CONSTRAINTS.SI_MIN_THRESHOLD,
-    SIG_THRESHOLD:    ACTIVE_CONSTRAINTS.SIG_THRESHOLD,
-    SI_DIM_THRESHOLD: ACTIVE_CONSTRAINTS.SI_DIM_THRESHOLD,
-    SHG_CORR_THRESHOLD: ACTIVE_CONSTRAINTS.SHG_CORR_THRESHOLD,
+    version:                    ACTIVE_CONSTRAINTS.version,
+    digest:                     ACTIVE_CONSTRAINTS.digest,
+    activated_at:               ACTIVE_CONSTRAINTS.activatedAt,
+    SI_MIN_THRESHOLD:           ACTIVE_CONSTRAINTS.SI_MIN_THRESHOLD,
+    SIG_THRESHOLD:              ACTIVE_CONSTRAINTS.SIG_THRESHOLD,
+    SI_DIM_THRESHOLD:           ACTIVE_CONSTRAINTS.SI_DIM_THRESHOLD,
+    SHG_CORR_THRESHOLD:         ACTIVE_CONSTRAINTS.SHG_CORR_THRESHOLD,
+    SHG_INDEPENDENCE_THRESHOLD: ACTIVE_CONSTRAINTS.SHG_INDEPENDENCE_THRESHOLD,
+    admission_gate:             gate.status,
+    ...(gate.reason     ? { admission_gate_reason:   gate.reason }          : {}),
+    ...(gate.activation ? { sealed_activation_seq:   gate.activation.seq }  : {}),
   });
 });
 
@@ -62,18 +76,22 @@ router.get('/chain', async (req, res, next) => {
 
 // ── GET /api/audit/chain/verify ───────────────────────────────────────────
 // Walks every sealed record in seq order and verifies the hash chain.
-router.get('/chain/verify', async (_req, res, next) => {
+// Query params:
+//   ?del=1   — also cross-verify each activation hash against the DEL chronology anchor.
+//              Requires DEL_SERVICE_URL to be configured. Missing anchors are reported
+//              as warnings (not errors) — the CIS chain is the primary authority.
+router.get('/chain/verify', async (req, res, next) => {
   try {
     const rows = await prisma.$queryRaw<Array<{
       seq: number; signal_id: string; case_id: string; decision: string;
       si_score: number; si_threshold: number; significance: number;
       sig_threshold: number; dim_threshold: number; constraint_version: string;
-      input_hash: string; decision_trace: unknown;
+      input_hash: string; decision_trace: unknown; logic_digest: string | null;
       prev_hash: string; current_hash: string; sealed_at: Date;
     }>>`
       SELECT seq, signal_id, case_id, decision,
              si_score, si_threshold, significance, sig_threshold, dim_threshold,
-             constraint_version, input_hash, decision_trace,
+             constraint_version, input_hash, decision_trace, logic_digest,
              prev_hash, current_hash, sealed_at
       FROM admission_audit_sealed
       ORDER BY seq ASC
@@ -88,8 +106,10 @@ router.get('/chain/verify', async (_req, res, next) => {
         errors.push(`seq ${row.seq}: prev_hash mismatch — expected ${expectedPrevHash}, got ${row.prev_hash}`);
       }
 
-      // Recompute current_hash from payload
-      const sealPayload = {
+      // Recompute current_hash from payload.
+      // logic_digest is included only for records sealed after migration_constraint_activation.sql
+      // was applied (non-null). Pre-migration records omit it — their hashes remain valid.
+      const sealPayload: Record<string, unknown> = {
         signal_id:          row.signal_id,
         case_id:            row.case_id,
         decision:           row.decision,
@@ -102,6 +122,8 @@ router.get('/chain/verify', async (_req, res, next) => {
         input_hash:         row.input_hash,
         decision_trace:     row.decision_trace,
       };
+      if (row.logic_digest) sealPayload['logic_digest'] = row.logic_digest;
+
       const recomputed = computeSealHash(sealPayload, row.prev_hash);
       if (recomputed !== row.current_hash) {
         errors.push(`seq ${row.seq}: current_hash tampered — stored ${row.current_hash}, recomputed ${recomputed}`);
@@ -110,11 +132,58 @@ router.get('/chain/verify', async (_req, res, next) => {
       expectedPrevHash = row.current_hash;
     }
 
-    res.json({
-      valid:        errors.length === 0,
+    const chainValid = errors.length === 0;
+    const response: Record<string, unknown> = {
+      valid:           chainValid,
       records_checked: rows.length,
       errors,
-    });
+    };
+
+    // DEL cross-verification: check each constraint activation hash is anchored in DEL.
+    if (req.query['del'] === '1') {
+      const activationRows = await prisma.$queryRaw<Array<{
+        seq: number; current_hash: string; constraint_version: string; activated_at: string;
+      }>>`
+        SELECT seq, current_hash, constraint_version, activated_at::text
+        FROM constraint_activation_sealed
+        ORDER BY seq ASC
+      `;
+
+      // Parallelise: all N DEL lookups in flight simultaneously.
+      // Each has its own timeout (DEL_ANCHOR_TIMEOUT_MS, default 5 s) so
+      // the worst-case for the whole batch is one timeout, not N × timeout.
+      const delChecks = await Promise.all(activationRows.map(async (act) => {
+        const anchor = await fetchDELAnchorForHash(act.current_hash);
+        if (anchor) {
+          return {
+            cis_seq:             act.seq,
+            cis_activation_hash: act.current_hash,
+            constraint_version:  act.constraint_version,
+            del_status:          'anchored' as const,
+            del_entry_id:        anchor.del_entry_id,
+            del_chronology_hash: anchor.del_chronology_hash,
+            anchored_at:         anchor.anchored_at,
+          };
+        }
+        return {
+          cis_seq:             act.seq,
+          cis_activation_hash: act.current_hash,
+          constraint_version:  act.constraint_version,
+          del_status:          (process.env.DEL_SERVICE_URL ? 'missing' : 'error') as 'missing' | 'error',
+        };
+      }));
+
+      const unanchored = delChecks.filter((c) => c.del_status !== 'anchored');
+      response['del_verification'] = {
+        checked:       delChecks.length,
+        all_anchored:  unanchored.length === 0,
+        unanchored:    unanchored.length,
+        del_configured: !!process.env.DEL_SERVICE_URL,
+        activations:   delChecks,
+      };
+    }
+
+    res.json(response);
   } catch (err) { next(err); }
 });
 
@@ -179,9 +248,9 @@ router.post('/signal/:signalId/replay', async (req, res, next) => {
     });
     const inputHashOk = recomputedInputHash === sealed.input_hash;
 
-    // 2. Re-run admission logic from frozen state
-    const siScore    = Number(sealed.si_score);
-    const siThreshold = Number(sealed.si_threshold);
+    // 2. Re-run admission from frozen state — must call decideAdmission, never re-implement
+    const siScore     = Number(sealed.si_score);
+    const siThreshold  = Number(sealed.si_threshold);
     const sigThreshold = Number(sealed.sig_threshold);
     const dimThreshold = Number(sealed.dim_threshold);
     const significance = Number(sealed.significance);
@@ -190,14 +259,10 @@ router.post('/signal/:signalId/replay', async (req, res, next) => {
       Number(sealed.si_relationship), Number(sealed.si_configuration)
     );
 
-    const passesWeighted  = siScore >= siThreshold;
-    const passesDimension = siMaxDim >= dimThreshold;
-    let replayDecision: string;
-    if (!passesWeighted && !passesDimension) {
-      replayDecision = 'REJECTED';
-    } else {
-      replayDecision = significance >= sigThreshold ? 'ADMITTED' : 'SUB_THRESHOLD_RETAINED';
-    }
+    const { decision: replayDecision } = decideAdmission(
+      { siScore, siMaxDimension: siMaxDim, significance },
+      { SI_MIN_THRESHOLD: siThreshold, SIG_THRESHOLD: sigThreshold, SI_DIM_THRESHOLD: dimThreshold },
+    );
 
     // 3. Re-run decision trace
     const replayTrace = buildDecisionTrace({
@@ -379,6 +444,71 @@ router.post('/frame/recompute/:caseId', async (req, res, next) => {
     }
     res.json({ recomputed: true, case_id: req.params.caseId, ...result });
   } catch (err) { next(err); }
+});
+
+// ── GET /api/audit/constraints/history ───────────────────────────────────────
+// Full activation lineage — answers "what constraint set was active at time T"
+// from sealed state, not from decisions.
+router.get('/constraints/history', async (_req, res, next) => {
+  try {
+    const activations = await listActivations();
+    res.json({ activations, total: activations.length });
+  } catch (err) { next(err); }
+});
+
+// ── POST /api/audit/constraints/activate ─────────────────────────────────────
+// Accept a signed activation payload (from scripts/sign-activation.ts),
+// verify it, and seal it into the activation chain.
+//
+// Body: { payload: ActivationPayload, signature: string, signer_key_version: string }
+//
+// Errors:
+//   400 MISSING_FIELDS           — payload, signature, or signer_key_version absent
+//   400 ACTIVATION_*             — specific verification failure (see constraint-activation.ts)
+//   500                          — unexpected error
+router.post('/constraints/activate', async (req, res, next) => {
+  try {
+    const body = req.body as Partial<SignedActivation>;
+    if (!body?.payload || !body?.signature || !body?.signer_key_version) {
+      return res.status(400).json({
+        error: 'payload, signature, and signer_key_version are required',
+        code: 'MISSING_FIELDS',
+        status: 400,
+      });
+    }
+
+    const signed: SignedActivation = {
+      payload:            body.payload,
+      signature:          body.signature,
+      signer_key_version: body.signer_key_version,
+    };
+
+    const record = await sealConstraintActivation(signed);
+
+    // Anchor in DEL chronology — non-blocking best-effort (failure does not roll back the activation).
+    const delAnchor = await anchorActivationInDEL({
+      cis_activation_hash: record.current_hash,
+      cis_seq:             record.seq,
+      constraint_version:  record.constraint_version,
+      logic_digest:        record.logic_digest,
+      activated_at:        record.activated_at,
+    });
+
+    return res.status(201).json({ sealed: true, activation: record, del_anchor: delAnchor });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.startsWith('ACTIVATION_') || msg === 'CIS_GOVERNANCE_PUBLIC_KEY not configured — cannot verify activation') {
+      return res.status(400).json({ error: msg, code: msg, status: 400 });
+    }
+    next(err);
+  }
+});
+
+// ── GET /api/audit/constraints/payload ───────────────────────────────────────
+// Returns the unsigned activation payload for the current constraint set.
+// Operators can inspect this before piping it to sign-activation.ts.
+router.get('/constraints/payload', (_req, res) => {
+  res.json(buildActivationPayload());
 });
 
 export default router;
