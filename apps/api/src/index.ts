@@ -64,9 +64,9 @@ app.get('/health', async (_req, res) => {
   try {
     await prisma.$executeRaw`SELECT 1`;
     const gate = getGateState();
-    const healthy = gate.status === 'VALID';
+    const healthy = gate.status !== 'INVALID';
     res.status(healthy ? 200 : 503).json({
-      status:    healthy ? 'ok' : 'degraded',
+      status:    gate.status === 'VALID' ? 'ok' : 'gated',
       db:        'connected',
       admission: gate.status,
       ...(gate.reason ? { admission_reason: gate.reason } : {}),
